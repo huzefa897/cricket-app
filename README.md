@@ -48,10 +48,25 @@ pnpm web:serve                     # Vite on 0.0.0.0:5173 (proxies /api → Djan
 
 ## Status
 
-✅ **Pre-phase 1 complete** — Nx + pnpm monorepo scaffold, Pipenv-managed Django
-backend (boots, migrates, DRF registered), and a runnable Vue 3 + Vite + Tailwind
-frontend skeleton. Both projects (`api`, `web`) are wired into Nx.
+✅ **Pre-phase 1 complete** — Nx + pnpm monorepo, Pipenv Django backend, Vue 3 + Vite
++ Tailwind frontend. Both projects (`api`, `web`) wired into Nx.
 
-⏭️ **Next: Phase 1 (Local Docker MVP)** — the `matches` app (5 models from
-[SCHEMA.md](docs/SCHEMA.md)), the scoring engine, the 4 API endpoints, and the 4
-frontend views. See [PHASES.md](docs/PHASES.md).
+✅ **Phase 1 (MVP) complete** — verified end-to-end:
+- **Backend**: `matches` app with 5 models, a scoring engine (`services.py`) covering
+  extras, legal-ball/over rollover, strike rotation, a manual wicket decider, and
+  innings/match completion; DRF endpoints for create/list/detail, live state, openers,
+  ball recording, and innings transition.
+- **Frontend**: Setup (ad-hoc teams + rosters + toss), Scorer dashboard (scoring matrix,
+  live players, over ticker, 5-step Wicket Wizard, innings transition), Viewer live
+  (read-only, polling), and History. Live updates via polling (no WebSockets in Phase 1).
+
+⏭️ **Next: Phase 2** — Undo/edit last ball, high-contrast sunlight mode, image/PDF
+scorecard export. See [PHASES.md](docs/PHASES.md).
+
+### Try it locally
+
+```bash
+pnpm api:serve      # terminal 1 — Django on :8000
+pnpm web:serve      # terminal 2 — Vite on :5173 (proxies /api → Django)
+# open http://localhost:5173
+```
