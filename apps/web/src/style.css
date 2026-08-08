@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  @apply bg-canvas text-slate-800 antialiased;
+  /* Prevent iOS text-size auto-adjust and rubber-band scrolling on the field. */
+  -webkit-text-size-adjust: 100%;
+}

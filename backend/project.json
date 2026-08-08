@@ -1,0 +1,44 @@
+{
+  "name": "api",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "backend",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pipenv run start",
+        "cwd": "backend"
+      }
+    },
+    "migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pipenv run migrate",
+        "cwd": "backend"
+      }
+    },
+    "mm": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pipenv run mm",
+        "cwd": "backend"
+      }
+    },
+    "migrate-fake": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pipenv run migrate --fake",
+        "cwd": "backend"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pipenv run ruff check .",
+        "cwd": "backend"
+      }
+    }
+  },
+  "tags": ["scope:backend"]
+}

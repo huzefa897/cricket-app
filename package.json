@@ -1,0 +1,18 @@
+{
+  "name": "howzatt-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@8.15.9",
+  "scripts": {
+    "api:serve": "nx run api:serve",
+    "api:mm": "nx run api:mm",
+    "api:migrate": "nx run api:migrate",
+    "api:migrate-fake": "nx run api:migrate-fake",
+    "web:serve": "nx run web:serve",
+    "web:build": "nx run web:build"
+  },
+  "devDependencies": {
+    "nx": "18.0.0",
+    "prettier": "^3.0.0"
+  }
+}

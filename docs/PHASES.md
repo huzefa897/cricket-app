@@ -10,6 +10,11 @@ python 3.11.9
 nodejs 20.20.2
 pnpm 8.15.9
 
+> **Setup note:** `.tool-versions` pins `python` and `nodejs` (both via asdf). pnpm is
+> provided by Node's **corepack** and pinned via the `"packageManager": "pnpm@8.15.9"`
+> field in the root `package.json`, so it is not listed in `.tool-versions`. Enable it
+> once with `corepack enable` (or `corepack prepare pnpm@8.15.9 --activate`).
+
 ### Root Directory Structure
 
 Plaintext

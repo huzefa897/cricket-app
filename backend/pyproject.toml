@@ -1,0 +1,14 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+# Django migrations are auto-generated; don't lint them.
+extend-exclude = ["**/migrations/**"]
+
+[tool.ruff.lint]
+# E/W: pycodestyle, F: pyflakes, I: isort, UP: pyupgrade,
+# B: bugbear, DJ: flake8-django, C4: comprehensions.
+select = ["E", "W", "F", "I", "UP", "B", "DJ", "C4"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"

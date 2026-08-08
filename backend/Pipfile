@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "~=4.2"
+djangorestframework = "~=3.14"
+# NOTE: Phase 1 uses SQLite (bundled with Python) — no external DB driver needed.
+# psycopg2-binary is added in Phase 3 for the Postgres migration only.
+
+[dev-packages]
+ruff = "*"
+
+[requires]
+python_version = "3.11"
+
+[scripts]
+start = "python manage.py runserver 0.0.0.0:8000"
+mm = "python manage.py makemigrations"
+migrate = "python manage.py migrate"

@@ -23,7 +23,35 @@ they must be updated in the same commit as any feature or architectural change.
 | [PALETTE.md](docs/PALETTE.md) | Functional color-coding system |
 | [NETWORK.md](docs/NETWORK.md) | Local network & field deployment (`cricket.local`) |
 
+## Getting Started
+
+Requires [asdf](https://asdf-vm.com/) with the `python` and `nodejs` plugins.
+
+```bash
+# 1. Toolchain (from repo root; reads .tool-versions)
+asdf install                       # python 3.11.9 + nodejs 20.20.2
+corepack enable                    # provides pnpm 8.15.9
+
+# 2. Frontend + Nx workspace deps
+pnpm install
+
+# 3. Backend deps (Pipenv virtualenv)
+cd backend && pipenv install --dev && cd ..
+
+# 4. Initialize the database
+pnpm nx run api:migrate
+
+# 5. Run it (two terminals)
+pnpm api:serve                     # Django on 0.0.0.0:8000
+pnpm web:serve                     # Vite on 0.0.0.0:5173 (proxies /api → Django)
+```
+
 ## Status
 
-📋 Planning complete. Implementation not yet started — see [PHASES.md](docs/PHASES.md)
-for the Phase 1 (Local Docker MVP) breakdown.
+✅ **Pre-phase 1 complete** — Nx + pnpm monorepo scaffold, Pipenv-managed Django
+backend (boots, migrates, DRF registered), and a runnable Vue 3 + Vite + Tailwind
+frontend skeleton. Both projects (`api`, `web`) are wired into Nx.
+
+⏭️ **Next: Phase 1 (Local Docker MVP)** — the `matches` app (5 models from
+[SCHEMA.md](docs/SCHEMA.md)), the scoring engine, the 4 API endpoints, and the 4
+frontend views. See [PHASES.md](docs/PHASES.md).

@@ -8,7 +8,6 @@ __pycache__/
 db.sqlite3
 .venv/
 venv/
-Pipfile.lock
 staticfiles/
 data/
 
@@ -17,6 +16,10 @@ node_modules/
 dist/
 .pnpm-store/
 *.log
+
+# Nx
+.nx/cache/
+.nx/workspace-data/
 
 # Env
 .env
