@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+.venv/
+venv/
+Pipfile.lock
+staticfiles/
+data/
+
+# Node / Vue / Vite
+node_modules/
+dist/
+.pnpm-store/
+*.log
+
+# Env
+.env
+.env.local
+
+# Editors
+.idea/
+.vscode/
