@@ -28,4 +28,5 @@ export const api = {
     request(`/matches/${id}/balls/`, { method: 'POST', body: payload }),
   transitionInnings: (id, payload) =>
     request(`/matches/${id}/innings/transition/`, { method: 'POST', body: payload }),
+  finishMatch: (id) => request(`/matches/${id}/finish/`, { method: 'POST' }),
 }

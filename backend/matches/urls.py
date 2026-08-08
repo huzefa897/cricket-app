@@ -13,4 +13,5 @@ urlpatterns = [
         views.transition_innings,
         name="match-transition",
     ),
+    path("matches/<int:match_id>/finish/", views.finish_match, name="match-finish"),
 ]

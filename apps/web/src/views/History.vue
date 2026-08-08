@@ -19,8 +19,9 @@ const STATUS_STYLE = {
 }
 
 function open(m) {
-  // Live matches go to the scorer's live viewer; completed go there too (scorecard).
-  router.push(`/match/${m.id}/live`)
+  // Resume scoring for a live match; completed matches open the read-only scorecard.
+  if (m.status === 'COMPLETED') router.push(`/match/${m.id}/live`)
+  else router.push(`/match/${m.id}/score`)
 }
 </script>
 

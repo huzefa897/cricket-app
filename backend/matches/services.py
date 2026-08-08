@@ -330,6 +330,24 @@ def transition_innings(
 
 
 # --------------------------------------------------------------------------- #
+# Finish (manual)
+# --------------------------------------------------------------------------- #
+@transaction.atomic
+def finish_match(match: Match) -> Match:
+    """Manually end a match: lock every open innings and mark it COMPLETED.
+
+    Once completed, record_ball is rejected (no active innings + the innings
+    is_completed guard), so scores can no longer change.
+    """
+    if match.status == MatchStatus.COMPLETED:
+        raise ValidationError("Match is already completed.")
+    match.innings.filter(is_completed=False).update(is_completed=True)
+    match.status = MatchStatus.COMPLETED
+    match.save(update_fields=["status"])
+    return match
+
+
+# --------------------------------------------------------------------------- #
 # Live state (for scorer + viewer)
 # --------------------------------------------------------------------------- #
 def build_live_state(match: Match) -> dict:
@@ -365,6 +383,12 @@ def build_live_state(match: Match) -> dict:
             "non_striker": _batter_stats(innings, innings.current_non_striker),
             "bowler": _bowler_stats(innings, innings.current_bowler),
             "this_over": _this_over(innings),
+            # Lets a resumed scorer rebuild the out-players list correctly.
+            "dismissed_player_ids": list(
+                innings.balls.filter(is_wicket=True, player_dismissed__isnull=False).values_list(
+                    "player_dismissed_id", flat=True
+                )
+            ),
         },
     }
 

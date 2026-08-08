@@ -13,13 +13,12 @@ const router = useRouter()
 
 const { live, refresh, start } = useLiveMatch(props.id)
 const detail = ref(null) // rosters
-const dismissed = ref(new Set()) // player ids already out (this innings)
 const busy = ref(false)
 const actionError = ref(null)
 
 const extrasKind = ref(null) // 'WIDE' | 'NO_BALL' | 'BYE_LEGBYE' | null
 const showWicket = ref(false)
-const showTransition = ref(false)
+const showFinishConfirm = ref(false)
 
 onMounted(async () => {
   detail.value = await api.getMatch(props.id)
@@ -49,12 +48,14 @@ const isLastWicket = computed(() => {
   const total = battingPlayers.value.length
   return total > 0 && inns.value && inns.value.total_wickets >= total - 2
 })
+// Out players come from the backend so the list is correct even after a resume.
+const dismissedIds = computed(() => new Set(inns.value?.dismissed_player_ids ?? []))
 const availableBatsmen = computed(() =>
   battingPlayers.value.filter(
     (p) =>
       p.id !== inns.value?.striker?.id &&
       p.id !== inns.value?.non_striker?.id &&
-      !dismissed.value.has(p.id),
+      !dismissedIds.value.has(p.id),
   ),
 )
 
@@ -89,14 +90,26 @@ function onExtras(payload) {
 
 function onWicket(payload) {
   showWicket.value = false
-  if (payload.player_dismissed_id) dismissed.value.add(payload.player_dismissed_id)
   send(payload)
 }
 
 async function submitTransition(payload) {
   await api.transitionInnings(props.id, payload)
-  dismissed.value = new Set()
   await refresh()
+}
+
+async function finishMatch() {
+  showFinishConfirm.value = false
+  busy.value = true
+  actionError.value = null
+  try {
+    await api.finishMatch(props.id)
+    await refresh()
+  } catch (e) {
+    actionError.value = e.message
+  } finally {
+    busy.value = false
+  }
 }
 </script>
 
@@ -198,6 +211,14 @@ async function submitTransition(payload) {
       >
         Wicket!
       </button>
+
+      <!-- Bottom control: end the match manually and lock scoring -->
+      <button
+        class="w-full mt-2 border-2 border-wicket text-wicket font-semibold rounded-xl py-3 active:scale-[0.99]"
+        @click="showFinishConfirm = true"
+      >
+        Finish Match
+      </button>
     </div>
 
     <!-- Modals -->
@@ -232,6 +253,34 @@ async function submitTransition(payload) {
       @confirm="onExtras"
       @cancel="extrasKind = null"
     />
+
+    <!-- Finish confirmation -->
+    <div
+      v-if="showFinishConfirm"
+      class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-20 p-3"
+    >
+      <div class="bg-card w-full max-w-md rounded-2xl shadow-lg p-5 space-y-4">
+        <h3 class="text-lg font-bold text-wicket">Finish this match?</h3>
+        <p class="text-sm text-slate-500">
+          This ends the match now and <b>locks the score</b>. No more balls can be recorded.
+          This cannot be undone.
+        </p>
+        <div class="flex gap-2">
+          <button
+            class="flex-1 border rounded-xl py-3 font-semibold text-slate-600"
+            @click="showFinishConfirm = false"
+          >
+            Cancel
+          </button>
+          <button
+            class="flex-1 bg-wicket text-white rounded-xl py-3 font-bold active:scale-95"
+            @click="finishMatch"
+          >
+            Finish &amp; Lock
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <p v-else class="text-slate-400 pt-10 text-center">Loading match…</p>

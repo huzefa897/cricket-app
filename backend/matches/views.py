@@ -95,3 +95,14 @@ def transition_innings(request, match_id):
     except DjangoValidationError as exc:
         return Response({"detail": exc.messages}, status=status.HTTP_400_BAD_REQUEST)
     return Response(services.build_live_state(match))
+
+
+@api_view(["POST"])
+def finish_match(request, match_id):
+    """Manually finish the match and lock scoring."""
+    match = get_object_or_404(Match, pk=match_id)
+    try:
+        services.finish_match(match)
+    except DjangoValidationError as exc:
+        return Response({"detail": exc.messages}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(services.build_live_state(match))
