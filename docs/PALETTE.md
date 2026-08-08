@@ -31,3 +31,35 @@
 - **System Navigation & Actions (`#4A6B5D` - Deep Sage Green)**
     - *Used For:* Primary brand headers, active tabs, and main confirmation buttons (e.g., `"Start Match"`).
     - *Vibe:* Grounded, professional, and tied to the classic natural aesthetic of cricket fields.
+
+---
+
+## 3. Tailwind Token Mapping
+
+These functional colors are registered as named tokens in `apps/web/tailwind.config.js`
+so components use semantic classes (`bg-runs`, `bg-boundary`) instead of raw hex values.
+This is the single source of truth for the palette in code.
+
+```js
+// apps/web/tailwind.config.js
+export default {
+  content: ['./index.html', './src/**/*.{vue,js,ts}'],
+  theme: {
+    extend: {
+      colors: {
+        canvas:    '#F8F9FA', // Off-white app background
+        card:      '#FFFFFF', // Container / card surfaces
+        runs:      '#475569', // Dots & singles (0,1,2,3)
+        boundary:  '#9333EA', // Fours & sixes
+        wide:      '#D97706', // Wides
+        noball:    '#0D9488', // No-balls
+        bye:       '#64748B', // Byes / leg-byes
+        wicket:    '#A34838', // Wickets & dismissals
+        system:    '#4A6B5D', // Headers, active tabs, primary actions
+      },
+    },
+  },
+}
+```
+
+Usage example: `<button class="bg-boundary text-white …">4</button>`.

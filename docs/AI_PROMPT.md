@@ -48,35 +48,34 @@ You can run both frontend and backend services directly from the project root wi
 
 ### Tech Stack
 
-- **Backend:** Python Django (Django REST Framework)
-- **Frontend:** Vue.js 3 (Composition API / Vite)
-- **Database:** SQLite (File-based, persistent local storage)
-- **Containerization:** Docker & Docker Compose
+- **Monorepo:** Nx + pnpm workspaces (single root, run everything from the top).
+- **Backend:** Python Django (Django REST Framework), managed via **Pipenv**.
+- **Frontend:** Vue.js 3 (Composition API / Vite), styled with **Tailwind CSS**.
+- **Database:** SQLite (File-based, persistent local storage; Postgres deferred to Phase 3).
+- **Containerization:** Docker & Docker Compose.
+- **Live updates (Phase 1):** HTTP polling of `GET /live` (WebSockets deferred to Phase 3 — see [NETWORK.md](NETWORK.md)).
 
 ### Repository Directory Layout
 
+See [REPO.md](REPO.md) for the full annotated tree. In brief:
+
 ```
-cricket-app/
-├── backend/                  # Django Backend (DRF)
-│   ├── core/                 # Django settings, wsgi, urls
-│   ├── matches/              # Models, serializers, API views
-│   │   ├── models.py         # (Team, Player, Match, Innings, BallEvent)
-│   │   ├── views.py          # API endpoints for scoring & live match
-│   │   └── urls.py
-│   ├── requirements.txt      # Python dependencies
+howzatt/
+├── backend/                  # Django Backend (DRF, Pipenv)
+│   ├── core/                 # settings, urls, wsgi
+│   ├── matches/              # models, serializers, services (scoring engine), views, urls
+│   ├── Pipfile               # Python dependencies & script aliases
+│   ├── project.json          # Nx project ("api")
 │   └── manage.py
-├── frontend/                 # Vue.js 3 Frontend (Vite)
-│   ├── src/
-│   │   ├── views/            # Setup.vue, ScorerDashboard.vue, ViewerLive.vue, History.vue
-│   │   ├── components/       # Reusable UI components (e.g., ScoreCard, WicketModal)
-│   │   ├── composables/      # Shared composition functions & API clients
-│   │   └── App.vue
-│   ├── package.json          # Node dependencies
-│   └── vite.config.js
-├── Dockerfile                # Multi-stage build (Node build + Python runtime)
+├── apps/
+│   └── web/                  # Vue 3 + Vite + Tailwind (Nx project "web")
+│       ├── src/              # views/, components/, composables/, router/, App.vue
+│       ├── project.json
+│       └── vite.config.js
+├── Dockerfile                # Multi-stage build (Node build of apps/web + Python runtime)
 ├── docker-compose.yml        # Local orchestration & volume persistence
-├── AI_PROMPT.md              # System prompt and design constraints
-└── README.md                 # Developer Guide & Repository Blueprint
+├── nx.json / pnpm-workspace.yaml / package.json
+└── docs/                     # Living documentation (this folder)
 ```
 
 ## 3. Engineering Principles & Guidelines
@@ -139,7 +138,7 @@ const props = defineProps({
   },
   variant: {
     type: String,
-    default: 'slate'
+    default: 'runs'
   }
 })
 
@@ -148,17 +147,18 @@ const emit = defineEmits(['click'])
 // 2. Reactive State & Computed Properties
 const isPressed = ref(false)
 
+// Variants map to the semantic Tailwind tokens defined in PALETTE.md
 const buttonClass = computed(() => {
   const variants = {
-    slate: 'bg-[#475569] text-white',
-    purple: 'bg-[#9333EA] text-white',
-    rust: 'bg-[#A34838] text-white',
-    sage: 'bg-[#4A6B5D] text-white',
-    ochre: 'bg-[#D97706] text-white',
-    teal: 'bg-[#0D9488] text-white',
-    'slate-blue': 'bg-[#64748B] text-white'
+    runs: 'bg-runs text-white',          // dots & singles
+    boundary: 'bg-boundary text-white',  // 4s & 6s
+    wicket: 'bg-wicket text-white',      // dismissals
+    system: 'bg-system text-white',      // primary actions
+    wide: 'bg-wide text-white',          // wides
+    noball: 'bg-noball text-white',      // no-balls
+    bye: 'bg-bye text-white'             // byes / leg-byes
   }
-  return variants[props.variant] || variants.slate
+  return variants[props.variant] || variants.runs
 })
 
 // 3. Methods & Handlers

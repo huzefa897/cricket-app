@@ -15,7 +15,7 @@ pnpm 8.15.9
 Plaintext
 
 ```
-cricket-app/
+howzatt/
 ├── .tool-versions            # asdf versions (python, node, pnpm)
 ├── .pre-commit-config.yaml   # Pre-commit hooks with Ruff auto-fix
 ├── pnpm-workspace.yaml       # pnpm workspace definition
@@ -71,7 +71,7 @@ JSON
 
 ```
 {
-  "name": "cricket-app-monorepo",
+  "name": "howzatt-monorepo",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -138,16 +138,19 @@ Ini, TOML
 [packages]
 django = "~=4.2"
 djangorestframework = "~=3.14"
-psycopg2-binary = "*"
+# NOTE: Phase 1 uses SQLite (bundled with Python) — no DB driver needed.
+# psycopg2-binary is added in Phase 3 for the Postgres migration only.
 
 [dev-packages]
 ruff = "*"
 
 [scripts]
-start = "python manage.py runserver 8000"
+start = "python manage.py runserver 0.0.0.0:8000"
 mm = "python manage.py makemigrations"
 migrate = "python manage.py migrate"
 ```
+
+> Binds to `0.0.0.0` so phones on the field Wi-Fi can reach the dev server — see [NETWORK.md](NETWORK.md).
 
 ## 5. Auto-Fixing Pre-commit Configuration (`.pre-commit-config.yaml`)
 

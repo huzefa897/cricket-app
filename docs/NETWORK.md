@@ -2,6 +2,13 @@
 
 # Local Network & Field Deployment
 
+> **⚠️ Phase scope note.** This document describes the *full* field-deployment target,
+> including real-time WebSockets. **Phase 1 (MVP) does NOT use WebSockets or Django
+> Channels** — the Viewer screen refreshes by **polling** `GET /api/matches/{id}/live/`
+> every few seconds. Every reference to Channels, ASGI, or `/ws/…` below applies to
+> **Phase 3** (Cloud Migration & Global Viewing). The local-network, `cricket.local`,
+> hotspot, `0.0.0.0` binding, one-origin, and Docker guidance all apply from Phase 1.
+
 ## Overview
 
 The cricket application is designed to run entirely on a local network at the cricket ground.
@@ -10,7 +17,7 @@ The MacBook acts as:
 
 - The application server
 - The SQLite database host
-- The WebSocket server
+- The WebSocket server *(Phase 3 only; Phase 1 uses polling)*
 - Optionally, the Wi-Fi hotspot/local network
 
 No internet connection is required for scoring or viewing the match.
@@ -454,14 +461,13 @@ SQLite
 Build the Vue application:
 
 ```bash
-cd frontend
-npm run build
+pnpm nx run web:build
 ```
 
 The resulting:
 
 ```
-frontend/dist/
+apps/web/dist/
 ```
 
 is copied into the Django production image.
