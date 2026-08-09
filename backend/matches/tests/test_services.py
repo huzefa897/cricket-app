@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from matches import services
-from matches.models import Innings, MatchStatus
+from matches.models import Innings, MatchStatus, Player
 
 
 def active_innings(match):
@@ -147,6 +147,50 @@ class TestWickets:
         state = services.build_live_state(match)
         assert striker in state["innings"]["dismissed_player_ids"]
 
+    def test_run_out_credits_completed_runs(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)
+        dismissed_id = inns.current_striker_id
+        # 2 runs completed, then the striker is run out going for a third.
+        services.record_ball(
+            inns,
+            runs_scored_bat=2,
+            is_wicket=True,
+            wicket_type="RUN_OUT",
+            player_dismissed_id=dismissed_id,
+            incoming_batsman_id=meta["one"][2],
+            new_striker_id=meta["one"][2],
+        )
+        inns.refresh_from_db()
+        assert inns.total_runs == 2  # the completed runs count on the innings
+        assert inns.total_wickets == 1
+        # The dismissed batter is credited with the 2 runs off 1 ball faced.
+        dismissed = Player.objects.get(pk=dismissed_id)
+        stats = services._batter_stats(inns, dismissed)
+        assert stats["runs"] == 2
+        assert stats["balls"] == 1
+
+    def test_wicket_on_last_ball_of_over_keeps_manual_strike(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)
+        # 5 dot balls — striker (one[0]) still on strike.
+        for _ in range(5):
+            services.record_ball(active_innings(match), runs_scored_bat=0)
+        inns = active_innings(match)
+        assert inns.current_striker_id == meta["one"][0]
+        # 6th ball: striker bowled; scorer puts the incoming batter on strike
+        # for the first ball of the NEXT over. The end-of-over swap must not undo this.
+        services.record_ball(
+            inns,
+            is_wicket=True,
+            wicket_type="BOWLED",
+            player_dismissed_id=meta["one"][0],
+            incoming_batsman_id=meta["one"][2],
+            new_striker_id=meta["one"][2],
+        )
+        inns.refresh_from_db()
+        assert inns.current_striker_id == meta["one"][2]
+
     def test_all_out_completes_innings(self, make_match):
         # 2 players/side => all out at 1 wicket.
         match, meta = make_match(players_per_side=2)
@@ -260,6 +304,18 @@ class TestLiveState:
         state = services.build_live_state(match)
         # 6 runs off 1 ball => CRR 36.0
         assert state["innings"]["crr"] == pytest.approx(36.0)
+
+    def test_no_ball_not_counted_as_ball_faced(self, opened_match):
+        match, _ = opened_match
+        # No-ball with 4 off the bat, then a legal dot to the same striker.
+        services.record_ball(
+            active_innings(match), extra_type="NO_BALL", extra_runs=1, runs_scored_bat=4
+        )
+        services.record_ball(active_innings(match), runs_scored_bat=0)
+        striker = services.build_live_state(match)["innings"]["striker"]
+        # Bat runs from the no-ball count; only the legal dot counts as a ball faced.
+        assert striker["runs"] == 4
+        assert striker["balls"] == 1
 
     def test_this_over_symbols(self, opened_match):
         match, _ = opened_match

@@ -64,6 +64,10 @@ To completely eliminate scorer errors during high-stress dismissal events, tappi
     - *Options:* `Bowled` | `Caught` | `Run Out` | `Stumped` | `LBW`
     - *Control:* Tapping any button instantly progresses to Step 2.
 - **Step 2: Who Got Out?**
+    - *Runs completed (run-outs only):* When the dismissal is `Run Out`, a `0 / 1 / 2 / 3`
+      selector appears first to capture runs completed before the dismissal. These are
+      credited to the striker off the delivery (`runs_scored_bat`); other dismissal types
+      always record zero bat runs.
     - *UI:* Two large split-screen buttons.
     - *Options:* `Striker (Current Batsman)` vs `Non-Striker`
     - *Control:* Tapping a choice advances to Step 3.

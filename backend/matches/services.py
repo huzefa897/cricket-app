@@ -190,9 +190,11 @@ def record_ball(
     elif _runs_physically_run(extra_type, runs_scored_bat, extra_runs) % 2 == 1:
         _swap_strike(innings)
 
-    # 3) End-of-over rotation (only on a legal ball that completes the over)
+    # 3) End-of-over rotation (only on a legal ball that completes the over).
+    #    On a wicket the manual decider already set who is on strike for the next
+    #    ball (i.e. the first of the new over), so we must not swap again here.
     over_complete = is_legal and innings.legal_balls_bowled % LEGAL_BALLS_PER_OVER == 0
-    if over_complete:
+    if over_complete and not is_wicket:
         _swap_strike(innings)
 
     # 4) Innings / match completion
@@ -396,13 +398,16 @@ def build_live_state(match: Match) -> dict:
 def _batter_stats(innings: Innings, player: Player | None) -> dict | None:
     if player is None:
         return None
-    balls = innings.balls.filter(batsman=player).exclude(extra_type=ExtraType.WIDE)
-    runs = balls.aggregate(r=Sum("runs_scored_bat"))["r"] or 0
+    faced = innings.balls.filter(batsman=player)
+    # Runs off the bat count on any delivery (incl. no-balls); wides carry no bat runs.
+    runs = faced.aggregate(r=Sum("runs_scored_bat"))["r"] or 0
+    # Balls faced counts legal deliveries only — wides and no-balls are not faced.
+    balls = faced.exclude(extra_type__in=[ExtraType.WIDE, ExtraType.NO_BALL]).count()
     return {
         "id": player.id,
         "name": player.name,
         "runs": runs,
-        "balls": balls.count(),
+        "balls": balls,
     }
 
 

@@ -21,9 +21,14 @@ const wicketType = ref<WicketType | null>(null)
 const dismissedId = ref<number | null>(null)
 const incomingId = ref<number | null>(null)
 const newStrikerId = ref<number | null>(null)
+// Runs completed before the dismissal — only run-outs can score off the delivery.
+const runsCompleted = ref(0)
+
+const isRunOut = computed(() => wicketType.value === 'RUN_OUT')
 
 function pickType(t: WicketType) {
   wicketType.value = t
+  if (t !== 'RUN_OUT') runsCompleted.value = 0
   step.value = 2
 }
 function pickDismissed(id: number) {
@@ -54,6 +59,7 @@ function confirm() {
   emit('confirm', {
     is_wicket: true,
     wicket_type: wicketType.value ?? 'NONE',
+    runs_scored_bat: runsCompleted.value,
     player_dismissed_id: dismissedId.value,
     incoming_batsman_id: props.isLastWicket ? null : incomingId.value,
     new_striker_id: props.isLastWicket ? null : newStrikerId.value,
@@ -83,6 +89,21 @@ function confirm() {
 
       <!-- Step 2: who got out -->
       <div v-else-if="step === 2" class="space-y-2">
+        <!-- Run-outs can complete runs before the dismissal -->
+        <div v-if="isRunOut" class="space-y-1">
+          <p class="text-sm text-slate-500">Runs completed before the run-out</p>
+          <div class="grid grid-cols-4 gap-2">
+            <button
+              v-for="n in [0, 1, 2, 3]"
+              :key="n"
+              class="font-bold rounded-lg py-3 active:scale-95"
+              :class="runsCompleted === n ? 'bg-runs text-white' : 'bg-canvas border text-slate-600'"
+              @click="runsCompleted = n"
+            >
+              {{ n }}
+            </button>
+          </div>
+        </div>
         <p class="text-sm text-slate-500">Who got out?</p>
         <div class="grid grid-cols-2 gap-2">
           <button
@@ -149,6 +170,10 @@ function confirm() {
           </div>
           <div class="flex justify-between">
             <span class="text-slate-500">Out</span><span class="font-semibold">{{ dismissedName }}</span>
+          </div>
+          <div v-if="isRunOut" class="flex justify-between">
+            <span class="text-slate-500">Runs</span
+            ><span class="font-semibold">{{ runsCompleted }}</span>
           </div>
           <div v-if="!isLastWicket" class="flex justify-between">
             <span class="text-slate-500">Incoming</span
