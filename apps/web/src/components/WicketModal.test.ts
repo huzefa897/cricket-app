@@ -59,6 +59,24 @@ describe('WicketModal', () => {
     expect(payload.runs_scored_bat).toBe(2)
   })
 
+  it('keeps the surviving striker on strike when the non-striker is run out', async () => {
+    const wrapper = mountModal()
+    await clickBtn(wrapper, 'RUN OUT')
+    await clickBtn(wrapper, '1') // runs completed
+    await clickBtn(wrapper, 'A2') // non-striker (id 2) is out
+    await wrapper.find('select').setValue(3) // incoming batsman
+    await clickBtn(wrapper, 'Next')
+    // The "stays on strike" option must offer the surviving striker (A1), not the incoming.
+    await clickBtn(wrapper, 'stays on strike')
+    await clickBtn(wrapper, 'Confirm')
+
+    const payload = wrapper.emitted('confirm')![0][0] as Record<string, unknown>
+    expect(payload.player_dismissed_id).toBe(2)
+    expect(payload.incoming_batsman_id).toBe(3)
+    // Regression: the original striker (A1) must be able to keep strike.
+    expect(payload.new_striker_id).toBe(1)
+  })
+
   it('records zero bat runs for a non-run-out dismissal', async () => {
     const wrapper = mountModal(true)
     await clickBtn(wrapper, 'BOWLED')

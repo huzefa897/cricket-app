@@ -170,6 +170,25 @@ class TestWickets:
         assert stats["runs"] == 2
         assert stats["balls"] == 1
 
+    def test_non_striker_run_out_can_keep_striker_on_strike(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)
+        striker = inns.current_striker_id  # one[0]
+        non_striker = inns.current_non_striker_id  # one[1]
+        # Non-striker run out; scorer keeps the original striker on strike.
+        services.record_ball(
+            inns,
+            runs_scored_bat=1,
+            is_wicket=True,
+            wicket_type="RUN_OUT",
+            player_dismissed_id=non_striker,
+            incoming_batsman_id=meta["one"][2],
+            new_striker_id=striker,
+        )
+        inns.refresh_from_db()
+        assert inns.current_striker_id == striker  # original striker still faces
+        assert inns.current_non_striker_id == meta["one"][2]  # incoming at the other end
+
     def test_wicket_on_last_ball_of_over_keeps_manual_strike(self, opened_match):
         match, meta = opened_match
         inns = active_innings(match)

@@ -47,12 +47,16 @@ function pickStrike(id: number | null) {
 const dismissedName = computed(() =>
   dismissedId.value === props.striker.id ? props.striker.name : props.nonStriker.name,
 )
+// The batter who was NOT dismissed and stays at the crease alongside the incoming one.
+const survivor = computed(() =>
+  dismissedId.value === props.striker.id ? props.nonStriker : props.striker,
+)
 const incomingName = computed(
   () => props.availableBatsmen.find((p) => p.id === incomingId.value)?.name ?? '—',
 )
 const newStrikerName = computed(() => {
   if (props.isLastWicket) return '—'
-  return newStrikerId.value === incomingId.value ? incomingName.value : 'Non-striker stays'
+  return newStrikerId.value === incomingId.value ? incomingName.value : survivor.value.name
 })
 
 function confirm() {
@@ -153,9 +157,9 @@ function confirm() {
           </button>
           <button
             class="bg-runs text-white font-semibold rounded-lg py-4 active:scale-95"
-            @click="pickStrike(nonStriker.id === dismissedId ? incomingId : nonStriker.id)"
+            @click="pickStrike(survivor.id)"
           >
-            Non-striker stays on strike
+            {{ survivor.name }} stays on strike
           </button>
         </div>
         <button class="text-slate-400 text-sm" @click="step = 3">← Back</button>
