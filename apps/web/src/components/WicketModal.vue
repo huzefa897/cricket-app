@@ -1,36 +1,40 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { BallPayload, BatterStat, Player, WicketType } from '../types'
 
 // 5-step guided Wicket Wizard (docs/UI_PLAN.md §3). Back buttons at every stage;
 // a final confirmation summary before the delivery is sent.
-const props = defineProps({
-  striker: { type: Object, required: true }, // {id, name}
-  nonStriker: { type: Object, required: true },
-  availableBatsmen: { type: Array, required: true }, // not currently on strike/non-strike
-  isLastWicket: { type: Boolean, default: false },
-})
-const emit = defineEmits(['confirm', 'cancel'])
+const props = withDefaults(
+  defineProps<{
+    striker: BatterStat
+    nonStriker: BatterStat
+    availableBatsmen: Player[] // not currently on strike/non-strike
+    isLastWicket?: boolean
+  }>(),
+  { isLastWicket: false },
+)
+const emit = defineEmits<{ confirm: [BallPayload]; cancel: [] }>()
 
-const DISMISSALS = ['BOWLED', 'CAUGHT', 'RUN_OUT', 'STUMPED', 'LBW']
+const DISMISSALS: WicketType[] = ['BOWLED', 'CAUGHT', 'RUN_OUT', 'STUMPED', 'LBW']
 const step = ref(1)
-const wicketType = ref(null)
-const dismissedId = ref(null)
-const incomingId = ref(null)
-const newStrikerId = ref(null)
+const wicketType = ref<WicketType | null>(null)
+const dismissedId = ref<number | null>(null)
+const incomingId = ref<number | null>(null)
+const newStrikerId = ref<number | null>(null)
 
-function pickType(t) {
+function pickType(t: WicketType) {
   wicketType.value = t
   step.value = 2
 }
-function pickDismissed(id) {
+function pickDismissed(id: number) {
   dismissedId.value = id
   step.value = props.isLastWicket ? 5 : 3
 }
-function pickIncoming(id) {
+function pickIncoming(id: number | null) {
   incomingId.value = id
   step.value = 4
 }
-function pickStrike(id) {
+function pickStrike(id: number | null) {
   newStrikerId.value = id
   step.value = 5
 }
@@ -48,7 +52,8 @@ const newStrikerName = computed(() => {
 
 function confirm() {
   emit('confirm', {
-    wicket_type: wicketType.value,
+    is_wicket: true,
+    wicket_type: wicketType.value ?? 'NONE',
     player_dismissed_id: dismissedId.value,
     incoming_batsman_id: props.isLastWicket ? null : incomingId.value,
     new_striker_id: props.isLastWicket ? null : newStrikerId.value,
@@ -140,7 +145,7 @@ function confirm() {
         <div class="bg-canvas rounded-lg p-4 space-y-1 text-sm">
           <div class="flex justify-between">
             <span class="text-slate-500">Dismissal</span
-            ><span class="font-semibold">{{ wicketType.replace('_', ' ') }}</span>
+            ><span class="font-semibold">{{ wicketType?.replace('_', ' ') }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-500">Out</span><span class="font-semibold">{{ dismissedName }}</span>

@@ -17,6 +17,20 @@
         "command": "pnpm build",
         "cwd": "apps/web"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm typecheck",
+        "cwd": "apps/web"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm test",
+        "cwd": "apps/web"
+      }
     }
   },
   "tags": ["scope:web"]

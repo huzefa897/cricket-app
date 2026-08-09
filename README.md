@@ -4,7 +4,8 @@ A mobile-optimized, local-first cricket scoring web app for weekend matches. Run
 entirely on a laptop at the ground (acting as a Wi-Fi hotspot) so scorers and
 spectators can use it from their phones without mobile data.
 
-**Stack:** Django + Django REST Framework · Vue 3 (Vite) · SQLite · Docker
+**Stack:** Django + Django REST Framework · Vue 3 + TypeScript + Pinia (Vite) · SQLite · Docker
+**Tests:** pytest-django (backend) · Vitest + @vue/test-utils (frontend)
 
 ## Planning & Design Docs
 
@@ -44,6 +45,14 @@ pnpm nx run api:migrate
 # 5. Run it (two terminals)
 pnpm api:serve                     # Django on 0.0.0.0:8000
 pnpm web:serve                     # Vite on 0.0.0.0:5173 (proxies /api → Django)
+```
+
+### Tests
+
+```bash
+pnpm nx run api:test               # backend (pytest-django)
+pnpm nx run web:test               # frontend (Vitest)
+pnpm nx run web:typecheck          # frontend types (vue-tsc)
 ```
 
 ## Status

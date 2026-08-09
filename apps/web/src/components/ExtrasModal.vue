@@ -1,19 +1,28 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+import type { BallPayload, ExtraType } from '../types'
+
+export type ExtrasKind = 'WIDE' | 'NO_BALL' | 'BYE_LEGBYE'
 
 // Captures the runs attached to an extra before sending the delivery.
 //  - WIDE:  runs scampered beyond the 1-run penalty
 //  - NO_BALL: runs scored off the bat (penalty added by backend intent)
 //  - BYE_LEGBYE: runs run, plus bye vs leg-bye choice
-const props = defineProps({
-  kind: { type: String, required: true }, // 'WIDE' | 'NO_BALL' | 'BYE_LEGBYE'
-})
-const emit = defineEmits(['confirm', 'cancel'])
+const props = defineProps<{ kind: ExtrasKind }>()
+const emit = defineEmits<{ confirm: [BallPayload]; cancel: [] }>()
 
 const runs = ref(0)
-const byeType = ref('BYE')
+const byeType = ref<ExtraType>('BYE')
 
-const TITLES = { WIDE: 'Wide', NO_BALL: 'No Ball', BYE_LEGBYE: 'Bye / Leg Bye' }
+const TITLES: Record<ExtrasKind, string> = {
+  WIDE: 'Wide',
+  NO_BALL: 'No Ball',
+  BYE_LEGBYE: 'Bye / Leg Bye',
+}
+const byeOptions: [ExtraType, string][] = [
+  ['BYE', 'Bye'],
+  ['LEG_BYE', 'Leg Bye'],
+]
 
 function confirm() {
   if (props.kind === 'WIDE') {
@@ -33,7 +42,7 @@ function confirm() {
 
       <div v-if="kind === 'BYE_LEGBYE'" class="grid grid-cols-2 gap-2">
         <button
-          v-for="t in [['BYE', 'Bye'], ['LEG_BYE', 'Leg Bye']]"
+          v-for="t in byeOptions"
           :key="t[0]"
           class="py-2 rounded-lg font-semibold border"
           :class="byeType === t[0] ? 'bg-bye text-white border-bye' : 'bg-canvas text-slate-600'"

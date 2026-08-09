@@ -1,9 +1,8 @@
-<script setup>
+<script setup lang="ts">
+import type { LiveState } from '../types'
+
 // Compact live summary shared by the scorer and viewer screens.
-defineProps({
-  live: { type: Object, required: true },
-  big: { type: Boolean, default: false }, // viewer uses larger type
-})
+withDefaults(defineProps<{ live: LiveState; big?: boolean }>(), { big: false })
 </script>
 
 <template>

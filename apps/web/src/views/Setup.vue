@@ -1,32 +1,42 @@
-<script setup>
+<script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/client'
+import type { PlayerInput, TossDecision } from '../types'
+
+interface TeamDraft {
+  name: string
+  short: string
+  players: PlayerInput[]
+  newPlayer: string
+}
 
 const router = useRouter()
 
 // Ad-hoc teams (Option A): names + on-the-fly rosters, no permanent directory.
-const teams = reactive([
+const teams = reactive<TeamDraft[]>([
   { name: '', short: '', players: [], newPlayer: '' },
   { name: '', short: '', players: [], newPlayer: '' },
 ])
 
 const totalOvers = ref(6)
 const oversPresets = [2, 5, 6, 10, 20]
-const tossWinnerIndex = ref(1) // 1 or 2
-const tossDecision = ref('BAT') // BAT | BOWL
+const tossWinnerIndex = ref<1 | 2>(1)
+const tossOptions: (1 | 2)[] = [1, 2]
+const tossDecision = ref<TossDecision>('BAT')
+const decisionOptions: TossDecision[] = ['BAT', 'BOWL']
 
 const submitting = ref(false)
-const error = ref(null)
+const error = ref<string | null>(null)
 
-function addPlayer(team) {
+function addPlayer(team: TeamDraft) {
   const name = team.newPlayer.trim()
   if (!name) return
   team.players.push({ name })
   team.newPlayer = ''
 }
 
-function removePlayer(team, idx) {
+function removePlayer(team: TeamDraft, idx: number) {
   team.players.splice(idx, 1)
 }
 
@@ -51,12 +61,12 @@ async function startMatch() {
       team_one_players: teams[0].players,
       team_two_players: teams[1].players,
       total_overs: Number(totalOvers.value),
-      toss_winner_index: Number(tossWinnerIndex.value),
+      toss_winner_index: tossWinnerIndex.value,
       toss_decision: tossDecision.value,
     })
     router.push(`/match/${match.id}/score`)
   } catch (e) {
-    error.value = e.message
+    error.value = (e as Error).message
   } finally {
     submitting.value = false
   }
@@ -139,7 +149,7 @@ async function startMatch() {
       <label class="text-sm font-semibold text-slate-600">Toss winner</label>
       <div class="grid grid-cols-2 gap-2">
         <button
-          v-for="ti in [1, 2]"
+          v-for="ti in tossOptions"
           :key="ti"
           class="px-4 py-3 rounded-lg font-semibold border truncate"
           :class="tossWinnerIndex === ti ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'"
@@ -151,7 +161,7 @@ async function startMatch() {
       <label class="text-sm font-semibold text-slate-600">Decision</label>
       <div class="grid grid-cols-2 gap-2">
         <button
-          v-for="d in ['BAT', 'BOWL']"
+          v-for="d in decisionOptions"
           :key="d"
           class="px-4 py-3 rounded-lg font-semibold border"
           :class="tossDecision === d ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'"

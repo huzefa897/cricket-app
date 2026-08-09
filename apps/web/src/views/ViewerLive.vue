@@ -1,20 +1,26 @@
-<script setup>
-import { computed, onMounted } from 'vue'
-import { useLiveMatch } from '../composables/useLiveMatch'
+<script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useMatchStore } from '../stores/match'
 import ScoreHeader from '../components/ScoreHeader.vue'
 
-const props = defineProps({ id: { type: [String, Number], required: true } })
-const { live, start } = useLiveMatch(props.id, { intervalMs: 3000 })
-onMounted(start)
+const props = defineProps<{ id: string | number }>()
 
-const inns = computed(() => live.value?.innings ?? null)
+const store = useMatchStore()
+const { live, innings: inns } = storeToRefs(store)
+
+onMounted(() => store.open(props.id, { intervalMs: 3000 }))
+onUnmounted(() => store.stopPolling())
 </script>
 
 <template>
   <div v-if="live" class="space-y-4">
     <ScoreHeader :live="live" big />
 
-    <div v-if="live.status === 'COMPLETED'" class="bg-system text-white rounded-xl p-4 text-center font-bold">
+    <div
+      v-if="live.status === 'COMPLETED'"
+      class="bg-system text-white rounded-xl p-4 text-center font-bold"
+    >
       🏆 Match Completed
     </div>
 
@@ -26,7 +32,9 @@ const inns = computed(() => live.value?.innings ?? null)
           v-for="(s, i) in inns.this_over"
           :key="i"
           class="shrink-0 min-w-9 h-9 px-2 grid place-items-center rounded-full font-bold text-white"
-          :class="s === 'W' ? 'bg-wicket' : s.includes('wd') || s.includes('nb') ? 'bg-wide' : 'bg-runs'"
+          :class="
+            s === 'W' ? 'bg-wicket' : s.includes('wd') || s.includes('nb') ? 'bg-wide' : 'bg-runs'
+          "
           >{{ s }}</span
         >
         <span v-if="!inns.this_over.length" class="text-slate-300">No balls yet this over.</span>
@@ -41,7 +49,9 @@ const inns = computed(() => live.value?.innings ?? null)
       </div>
       <div v-if="inns.non_striker" class="flex justify-between">
         <span>{{ inns.non_striker.name }}</span>
-        <span class="text-slate-500">{{ inns.non_striker.runs }} ({{ inns.non_striker.balls }})</span>
+        <span class="text-slate-500">
+          {{ inns.non_striker.runs }} ({{ inns.non_striker.balls }})
+        </span>
       </div>
       <div v-if="inns.bowler" class="flex justify-between border-t pt-2 text-sm text-slate-500">
         <span>{{ inns.bowler.name }}</span>

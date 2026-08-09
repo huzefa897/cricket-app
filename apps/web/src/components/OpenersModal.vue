@@ -1,17 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { OpenersPayload, Player } from '../types'
 
 // Reused for Innings-1 openers and after the innings transition.
-const props = defineProps({
-  title: { type: String, default: 'Select Opening Players' },
-  battingPlayers: { type: Array, required: true },
-  bowlingPlayers: { type: Array, required: true },
-})
-const emit = defineEmits(['confirm'])
+const props = withDefaults(
+  defineProps<{
+    title?: string
+    battingPlayers: Player[]
+    bowlingPlayers: Player[]
+  }>(),
+  { title: 'Select Opening Players' },
+)
+const emit = defineEmits<{ confirm: [OpenersPayload] }>()
 
-const strikerId = ref(null)
-const nonStrikerId = ref(null)
-const bowlerId = ref(null)
+const strikerId = ref<number | null>(null)
+const nonStrikerId = ref<number | null>(null)
+const bowlerId = ref<number | null>(null)
 
 const nonStrikerOptions = computed(() =>
   props.battingPlayers.filter((p) => p.id !== strikerId.value),
@@ -27,9 +31,9 @@ const ready = computed(
 function confirm() {
   if (!ready.value) return
   emit('confirm', {
-    striker_id: strikerId.value,
-    non_striker_id: nonStrikerId.value,
-    bowler_id: bowlerId.value,
+    striker_id: strikerId.value!,
+    non_striker_id: nonStrikerId.value!,
+    bowler_id: bowlerId.value!,
   })
 }
 </script>

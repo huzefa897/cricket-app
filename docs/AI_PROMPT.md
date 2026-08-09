@@ -50,10 +50,17 @@ You can run both frontend and backend services directly from the project root wi
 
 - **Monorepo:** Nx + pnpm workspaces (single root, run everything from the top).
 - **Backend:** Python Django (Django REST Framework), managed via **Pipenv**.
-- **Frontend:** Vue.js 3 (Composition API / Vite), styled with **Tailwind CSS**.
+- **Frontend:** Vue.js 3 + **TypeScript** (`<script setup lang="ts">` / Vite), state via
+  **Pinia**, styled with **Tailwind CSS**.
+- **Testing:** **Vitest** + `@vue/test-utils` (frontend) and **pytest** + **pytest-django**
+  (backend). Every feature ships with tests — run `pnpm nx run web:test` and
+  `pnpm nx run api:test`.
 - **Database:** SQLite (File-based, persistent local storage; Postgres deferred to Phase 3).
 - **Containerization:** Docker & Docker Compose.
 - **Live updates (Phase 1):** HTTP polling of `GET /live` (WebSockets deferred to Phase 3 — see [NETWORK.md](NETWORK.md)).
+
+> **Testing policy:** every new feature must ship with both backend and frontend tests
+> (or whichever layer it touches). Behavior is locked in by tests before we move on.
 
 ### Repository Directory Layout
 

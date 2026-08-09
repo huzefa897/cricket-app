@@ -22,7 +22,7 @@ howzatt/
 │
 ├── backend/                    # Django Backend (DRF, managed via Pipenv)
 │   ├── Pipfile                 # Python dependencies & script aliases
-│   ├── pyproject.toml          # Ruff configuration
+│   ├── pyproject.toml          # Ruff + pytest configuration
 │   ├── project.json            # Nx project definition ("api")
 │   ├── manage.py
 │   ├── core/                   # Django settings, urls, wsgi (asgi added in Phase 3)
@@ -31,23 +31,32 @@ howzatt/
 │       ├── serializers.py      # DRF serializers (explicit fields + validation)
 │       ├── services.py         # Scoring engine: rules, extras, strike rotation
 │       ├── views.py            # API endpoints for scoring & live match
-│       └── urls.py
+│       ├── urls.py
+│       └── tests/              # pytest-django: test_services.py, test_api.py
 │
 └── apps/
-    └── web/                    # Vue 3 + Vite + Tailwind (managed via pnpm/Nx)
+    └── web/                    # Vue 3 + TypeScript + Vite + Tailwind (pnpm/Nx)
         ├── package.json
-        ├── project.json        # Nx project definition ("web")
-        ├── vite.config.js      # Dev server + /api proxy (see NETWORK.md)
+        ├── project.json        # Nx project ("web"): build, test, typecheck
+        ├── vite.config.ts      # Dev server + /api proxy + Vitest config (see NETWORK.md)
+        ├── tsconfig.json       # TypeScript config
         ├── tailwind.config.js  # Functional palette tokens (see PALETTE.md)
         ├── postcss.config.js
         └── src/
-            ├── main.js
+            ├── main.ts
             ├── App.vue
+            ├── types.ts        # Shared domain types (mirror the API)
+            ├── api/            # client.ts — typed fetch wrapper (relative /api)
+            ├── stores/         # Pinia stores: match.ts (+ .test.ts)
             ├── router/         # Route table (/setup, /match/:id/score, …)
-            ├── views/          # Setup.vue, ScorerDashboard.vue, ViewerLive.vue, History.vue
-            ├── components/     # Reusable UI parts (ScoreCard, WicketModal, …)
-            └── composables/    # useApi, useLiveMatch (polling), shared state
+            ├── views/          # Setup, ScorerDashboard, ViewerLive, History (.vue)
+            └── components/     # ScoreHeader, WicketModal, ExtrasModal, OpenersModal (+ .test.ts)
 ```
+
+## Testing
+
+- **Backend:** `pnpm nx run api:test` (pytest-django)
+- **Frontend:** `pnpm nx run web:test` (Vitest) · `pnpm nx run web:typecheck` (vue-tsc)
 
 ## Root-Level Commands
 

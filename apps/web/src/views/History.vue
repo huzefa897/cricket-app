@@ -1,10 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/client'
+import type { MatchListItem, MatchStatus } from '../types'
 
 const router = useRouter()
-const matches = ref([])
+const matches = ref<MatchListItem[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
@@ -12,13 +13,13 @@ onMounted(async () => {
   loading.value = false
 })
 
-const STATUS_STYLE = {
+const STATUS_STYLE: Record<MatchStatus, string> = {
   LIVE: 'bg-boundary text-white',
   COMPLETED: 'bg-system text-white',
   UPCOMING: 'bg-slate-200 text-slate-600',
 }
 
-function open(m) {
+function open(m: MatchListItem) {
   // Resume scoring for a live match; completed matches open the read-only scorecard.
   if (m.status === 'COMPLETED') router.push(`/match/${m.id}/live`)
   else router.push(`/match/${m.id}/score`)

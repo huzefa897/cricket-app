@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 // App shell: a slim sticky header + the routed view. Individual screens own their
 // own layout (see docs/UI_PLAN.md).
 </script>

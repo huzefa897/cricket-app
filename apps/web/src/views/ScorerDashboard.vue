@@ -1,115 +1,72 @@
-<script setup>
-import { computed, onMounted, ref } from 'vue'
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { api } from '../api/client'
-import { useLiveMatch } from '../composables/useLiveMatch'
+import { useMatchStore } from '../stores/match'
+import type { BallPayload, OpenersPayload } from '../types'
+import type { ExtrasKind } from '../components/ExtrasModal.vue'
 import ScoreHeader from '../components/ScoreHeader.vue'
 import OpenersModal from '../components/OpenersModal.vue'
 import WicketModal from '../components/WicketModal.vue'
 import ExtrasModal from '../components/ExtrasModal.vue'
 
-const props = defineProps({ id: { type: [String, Number], required: true } })
+const props = defineProps<{ id: string | number }>()
 const router = useRouter()
 
-const { live, refresh, start } = useLiveMatch(props.id)
-const detail = ref(null) // rosters
-const busy = ref(false)
-const actionError = ref(null)
+const store = useMatchStore()
+const { live, innings: inns, battingPlayers, bowlingPlayers, availableBatsmen, isLastWicket } =
+  storeToRefs(store)
 
-const extrasKind = ref(null) // 'WIDE' | 'NO_BALL' | 'BYE_LEGBYE' | null
+const busy = ref(false)
+const actionError = ref<string | null>(null)
+const extrasKind = ref<ExtrasKind | null>(null)
 const showWicket = ref(false)
 const showFinishConfirm = ref(false)
 
-onMounted(async () => {
-  detail.value = await api.getMatch(props.id)
-  start()
-})
+onMounted(() => store.open(props.id))
+onUnmounted(() => store.stopPolling())
 
-// --- Roster helpers -------------------------------------------------------
-function playersOfTeam(name) {
-  if (!detail.value) return []
-  for (const t of [detail.value.team_one, detail.value.team_two]) {
-    if (t.name === name) return t.players
-  }
-  return []
-}
-const battingPlayers = computed(() => playersOfTeam(live.value?.innings?.batting_team))
-const bowlingPlayers = computed(() => playersOfTeam(live.value?.innings?.bowling_team))
-
-// --- Match state flags -----------------------------------------------------
-const inns = computed(() => live.value?.innings ?? null)
-const needsOpeners = computed(() => inns.value && !inns.value.striker && !inns.value.is_completed)
+// --- State flags ---
+const needsOpeners = computed(() => !!inns.value && !inns.value.striker && !inns.value.is_completed)
 const matchCompleted = computed(() => live.value?.status === 'COMPLETED')
 const needsTransition = computed(
-  () => inns.value?.is_completed && inns.value.innings_number === 1 && !matchCompleted.value,
+  () => !!inns.value?.is_completed && inns.value.innings_number === 1 && !matchCompleted.value,
 )
 
-const isLastWicket = computed(() => {
-  const total = battingPlayers.value.length
-  return total > 0 && inns.value && inns.value.total_wickets >= total - 2
-})
-// Out players come from the backend so the list is correct even after a resume.
-const dismissedIds = computed(() => new Set(inns.value?.dismissed_player_ids ?? []))
-const availableBatsmen = computed(() =>
-  battingPlayers.value.filter(
-    (p) =>
-      p.id !== inns.value?.striker?.id &&
-      p.id !== inns.value?.non_striker?.id &&
-      !dismissedIds.value.has(p.id),
-  ),
-)
-
-// --- Actions ---------------------------------------------------------------
-async function send(payload) {
+// --- Actions ---
+async function run<T>(fn: () => Promise<T>) {
   if (busy.value) return
   busy.value = true
   actionError.value = null
   try {
-    await api.recordBall(props.id, payload)
-    await refresh()
+    await fn()
   } catch (e) {
-    actionError.value = e.message
+    actionError.value = (e as Error).message
   } finally {
     busy.value = false
   }
 }
 
-function runs(n) {
-  send({ runs_scored_bat: n })
+function runs(n: number) {
+  run(() => store.recordBall({ runs_scored_bat: n }))
 }
-
-async function submitOpeners(payload) {
-  await api.setOpeners(props.id, payload)
-  await refresh()
+function submitOpeners(payload: OpenersPayload) {
+  run(() => store.setOpeners(payload))
 }
-
-function onExtras(payload) {
+function onExtras(payload: BallPayload) {
   extrasKind.value = null
-  send(payload)
+  run(() => store.recordBall(payload))
 }
-
-function onWicket(payload) {
+function onWicket(payload: BallPayload) {
   showWicket.value = false
-  send(payload)
+  run(() => store.recordBall(payload))
 }
-
-async function submitTransition(payload) {
-  await api.transitionInnings(props.id, payload)
-  await refresh()
+function submitTransition(payload: OpenersPayload) {
+  run(() => store.transition(payload))
 }
-
-async function finishMatch() {
+function finishMatch() {
   showFinishConfirm.value = false
-  busy.value = true
-  actionError.value = null
-  try {
-    await api.finishMatch(props.id)
-    await refresh()
-  } catch (e) {
-    actionError.value = e.message
-  } finally {
-    busy.value = false
-  }
+  run(() => store.finish())
 }
 </script>
 
@@ -118,7 +75,10 @@ async function finishMatch() {
     <ScoreHeader :live="live" />
 
     <!-- Active players -->
-    <div v-if="inns && inns.striker" class="bg-card rounded-xl shadow-sm p-4 grid grid-cols-3 gap-2 text-sm">
+    <div
+      v-if="inns && inns.striker"
+      class="bg-card rounded-xl shadow-sm p-4 grid grid-cols-3 gap-2 text-sm"
+    >
       <div>
         <p class="text-slate-400">Striker</p>
         <p class="font-semibold">★ {{ inns.striker.name }}</p>
@@ -127,13 +87,17 @@ async function finishMatch() {
       <div>
         <p class="text-slate-400">Non-striker</p>
         <p class="font-semibold">{{ inns.non_striker?.name ?? '—' }}</p>
-        <p class="text-slate-500">{{ inns.non_striker?.runs ?? 0 }} ({{ inns.non_striker?.balls ?? 0 }})</p>
+        <p class="text-slate-500">
+          {{ inns.non_striker?.runs ?? 0 }} ({{ inns.non_striker?.balls ?? 0 }})
+        </p>
       </div>
       <div>
         <p class="text-slate-400">Bowler</p>
         <p class="font-semibold">{{ inns.bowler?.name ?? '—' }}</p>
         <p class="text-slate-500">
-          {{ inns.bowler?.overs ?? '0.0' }}–{{ inns.bowler?.runs_conceded ?? 0 }}–{{ inns.bowler?.wickets ?? 0 }}
+          {{ inns.bowler?.overs ?? '0.0' }}–{{ inns.bowler?.runs_conceded ?? 0 }}–{{
+            inns.bowler?.wickets ?? 0
+          }}
         </p>
       </div>
       <div class="col-span-3 flex gap-1 flex-wrap pt-2 border-t">
@@ -224,35 +188,30 @@ async function finishMatch() {
     <!-- Modals -->
     <OpenersModal
       v-if="needsOpeners"
-      :battingPlayers="battingPlayers"
-      :bowlingPlayers="bowlingPlayers"
+      :batting-players="battingPlayers"
+      :bowling-players="bowlingPlayers"
       @confirm="submitOpeners"
     />
 
     <OpenersModal
       v-if="needsTransition"
       title="Innings Break — Set Openers for 2nd Innings"
-      :battingPlayers="bowlingPlayers"
-      :bowlingPlayers="battingPlayers"
+      :batting-players="bowlingPlayers"
+      :bowling-players="battingPlayers"
       @confirm="submitTransition"
     />
 
     <WicketModal
-      v-if="showWicket && inns?.striker"
+      v-if="showWicket && inns?.striker && inns?.non_striker"
       :striker="inns.striker"
-      :nonStriker="inns.non_striker"
-      :availableBatsmen="availableBatsmen"
-      :isLastWicket="isLastWicket"
+      :non-striker="inns.non_striker"
+      :available-batsmen="availableBatsmen"
+      :is-last-wicket="isLastWicket"
       @confirm="onWicket"
       @cancel="showWicket = false"
     />
 
-    <ExtrasModal
-      v-if="extrasKind"
-      :kind="extrasKind"
-      @confirm="onExtras"
-      @cancel="extrasKind = null"
-    />
+    <ExtrasModal v-if="extrasKind" :kind="extrasKind" @confirm="onExtras" @cancel="extrasKind = null" />
 
     <!-- Finish confirmation -->
     <div
@@ -262,8 +221,8 @@ async function finishMatch() {
       <div class="bg-card w-full max-w-md rounded-2xl shadow-lg p-5 space-y-4">
         <h3 class="text-lg font-bold text-wicket">Finish this match?</h3>
         <p class="text-sm text-slate-500">
-          This ends the match now and <b>locks the score</b>. No more balls can be recorded.
-          This cannot be undone.
+          This ends the match now and <b>locks the score</b>. No more balls can be recorded. This
+          cannot be undone.
         </p>
         <div class="flex gap-2">
           <button
