@@ -12,3 +12,8 @@ ignore = []
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-q"

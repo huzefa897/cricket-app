@@ -11,6 +11,9 @@ djangorestframework = "~=3.14"
 
 [dev-packages]
 ruff = "*"
+# Pinned to a known-good combo: pytest-django 4.13 has an eager-setup regression.
+pytest = ">=8,<9"
+pytest-django = "==4.8.0"
 
 [requires]
 python_version = "3.11"
@@ -19,3 +22,4 @@ python_version = "3.11"
 start = "python manage.py runserver 0.0.0.0:8000"
 mm = "python manage.py makemigrations"
 migrate = "python manage.py migrate"
+test = "pytest"
