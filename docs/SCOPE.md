@@ -40,6 +40,9 @@
 - **Strike Rotation:**
     - Automatic strike rotation on odd runs scored off the bat (1, 3).
     - Automatic strike rotation at the end of every completed over.
+- **End-of-Over Bowler Change:** When an over completes (6 legal balls) and the innings
+  is still live, the scorer is prompted to select the next bowler before any further
+  delivery can be logged. The same bowler cannot bowl two overs in a row.
 - **Boundaries:** Tracks individual 4s and 6s for enhanced scorecards.
 
 ### Match Completion & History
@@ -156,5 +159,8 @@
     - *Purpose:* Fetch real-time match state JSON (score, CRR, RRR, current batters/bowlers) for Scorer and Viewer interfaces.
 - **`POST /api/matches/{id}/balls/`**
     - *Purpose:* Submit a delivery payload. Triggers backend rule validations (over increments, extra calculations, strike rotation, and wicket processing).
+- **`POST /api/matches/{id}/bowler/`**
+    - *Purpose:* Change the current bowler at the end of an over. Payload `{ bowler_id }`.
+      Rejects a batting-team player, the same bowler two overs running, and a completed innings.
 - **`POST /api/matches/{id}/innings/transition/`**
     - *Purpose:* Concludes Innings 1, computes target, swaps teams, and initializes Innings 2 opening constraints.

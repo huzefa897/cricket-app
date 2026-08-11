@@ -21,6 +21,9 @@ dist/
 .nx/cache/
 .nx/workspace-data/
 
+# TypeScript
+*.tsbuildinfo
+
 # Env
 .env
 .env.local
