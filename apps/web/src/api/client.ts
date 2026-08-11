@@ -39,6 +39,8 @@ export const api = {
   getLive: (id: number | string) => request<LiveState>(`/matches/${id}/live/`),
   setOpeners: (id: number | string, payload: OpenersPayload) =>
     request<LiveState>(`/matches/${id}/openers/`, { method: 'POST', body: payload }),
+  changeBowler: (id: number | string, bowlerId: number) =>
+    request<LiveState>(`/matches/${id}/bowler/`, { method: 'POST', body: { bowler_id: bowlerId } }),
   recordBall: (id: number | string, payload: BallPayload) =>
     request<LiveState>(`/matches/${id}/balls/`, { method: 'POST', body: payload }),
   transitionInnings: (id: number | string, payload: OpenersPayload) =>

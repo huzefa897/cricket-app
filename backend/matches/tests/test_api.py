@@ -118,6 +118,29 @@ class TestMatchApi:
         res = client.post(f"/api/matches/{match['id']}/finish/")
         assert res.status_code == 400
 
+    def test_change_bowler_updates_live_state(self, client):
+        match = create_match(client)
+        set_openers(client, match)  # opener bowler is team_two[0]
+        b = match["team_two"]["players"]
+        res = client.post(
+            f"/api/matches/{match['id']}/bowler/",
+            {"bowler_id": b[1]["id"]},
+            format="json",
+        )
+        assert res.status_code == 200, res.content
+        assert res.json()["innings"]["bowler"]["id"] == b[1]["id"]
+
+    def test_change_bowler_rejects_batting_team_player(self, client):
+        match = create_match(client)
+        set_openers(client, match)
+        a = match["team_one"]["players"]  # batting side — illegal as bowler
+        res = client.post(
+            f"/api/matches/{match['id']}/bowler/",
+            {"bowler_id": a[2]["id"]},
+            format="json",
+        )
+        assert res.status_code == 400
+
     def test_live_exposes_dismissed_player_ids(self, client):
         match = create_match(client)
         set_openers(client, match)

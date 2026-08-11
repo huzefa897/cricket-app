@@ -7,6 +7,11 @@ urlpatterns = [
     path("matches/<int:match_id>/", views.MatchDetailView.as_view(), name="match-detail"),
     path("matches/<int:match_id>/live/", views.MatchLiveView.as_view(), name="match-live"),
     path("matches/<int:match_id>/openers/", views.SetOpenersView.as_view(), name="match-openers"),
+    path(
+        "matches/<int:match_id>/bowler/",
+        views.ChangeBowlerView.as_view(),
+        name="match-bowler",
+    ),
     path("matches/<int:match_id>/balls/", views.RecordBallView.as_view(), name="match-balls"),
     path(
         "matches/<int:match_id>/innings/transition/",

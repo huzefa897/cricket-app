@@ -74,6 +74,10 @@ export const useMatchStore = defineStore('match', () => {
     if (currentId == null) return
     live.value = await api.setOpeners(currentId, payload)
   }
+  async function changeBowler(bowlerId: number) {
+    if (currentId == null) return
+    live.value = await api.changeBowler(currentId, bowlerId)
+  }
 
   async function recordBall(payload: BallPayload) {
     if (currentId == null) return
@@ -112,6 +116,7 @@ export const useMatchStore = defineStore('match', () => {
     stopPolling,
     open,
     setOpeners,
+    changeBowler,
     recordBall,
     transition,
     finish,

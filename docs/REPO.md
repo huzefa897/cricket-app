@@ -50,7 +50,7 @@ howzatt/
             ├── stores/         # Pinia stores: match.ts (+ .test.ts)
             ├── router/         # Route table (/setup, /match/:id/score, …)
             ├── views/          # Setup, ScorerDashboard, ViewerLive, History (.vue)
-            └── components/     # ScoreHeader, WicketModal, ExtrasModal, OpenersModal (+ .test.ts)
+            └── components/     # ScoreHeader, WicketModal, ExtrasModal, OpenersModal, BowlerModal (+ .test.ts)
 ```
 
 ## Testing

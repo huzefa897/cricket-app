@@ -9,6 +9,7 @@ vi.mock('../api/client', () => ({
     getMatch: vi.fn(),
     getLive: vi.fn(),
     setOpeners: vi.fn(),
+    changeBowler: vi.fn(),
     recordBall: vi.fn(),
     transitionInnings: vi.fn(),
     finishMatch: vi.fn(),
@@ -112,6 +113,19 @@ describe('match store', () => {
     await store.recordBall({ runs_scored_bat: 4 })
     expect(mockedApi.recordBall).toHaveBeenCalledWith(1, { runs_scored_bat: 4 })
     expect(store.innings?.total_runs).toBe(4)
+  })
+
+  it('changeBowler sends the id and updates live state', async () => {
+    mockedApi.getMatch.mockResolvedValue(detailFixture)
+    mockedApi.getLive.mockResolvedValue(liveFixture())
+    mockedApi.changeBowler.mockResolvedValue(
+      liveFixture({ bowler: { id: 9, name: 'B2', overs: '0.0', runs_conceded: 0, wickets: 0 } }),
+    )
+    const store = useMatchStore()
+    await store.open(1, { poll: false })
+    await store.changeBowler(9)
+    expect(mockedApi.changeBowler).toHaveBeenCalledWith(1, 9)
+    expect(store.innings?.bowler?.id).toBe(9)
   })
 
   it('finish() marks the match completed', async () => {

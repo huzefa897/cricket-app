@@ -10,6 +10,7 @@ from . import services
 from .models import Match
 from .serializers import (
     BallInputSerializer,
+    BowlerChangeSerializer,
     MatchCreateSerializer,
     MatchDetailSerializer,
     MatchListSerializer,
@@ -69,10 +70,27 @@ class SetOpenersView(APIView):
         return Response(services.build_live_state(match))
 
 
+class ChangeBowlerView(APIView):
+    """Change the bowler at the end of an over."""
+
+    def post(self, request, match_id):
+        match = get_object_or_404(Match, pk=match_id)
+        innings = _active_innings(match)
+        if innings is None:
+            return Response({"detail": "No active innings."}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = BowlerChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            services.change_bowler(innings, **serializer.validated_data)
+        except DjangoValidationError as exc:
+            return Response({"detail": exc.messages}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(services.build_live_state(match))
+
+
 class RecordBallView(APIView):
     """Record one delivery on the active innings."""
 
-    def post(self,request, match_id):
+    def post(self, request, match_id):
         match = get_object_or_404(Match, pk=match_id)
         innings = _active_innings(match)
         if innings is None:
@@ -92,7 +110,7 @@ class RecordBallView(APIView):
 class TransitionInningsView(APIView):
     """End Innings 1 and open Innings 2 (swap sides, set new openers)."""
 
-    def post(self,request, match_id):
+    def post(self, request, match_id):
         match = get_object_or_404(Match, pk=match_id)
         serializer = OpenersSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -106,7 +124,7 @@ class TransitionInningsView(APIView):
 class FinishMatchView(APIView):
     """Manually finish the match and lock scoring."""
 
-    def post(self,request, match_id):
+    def post(self, request, match_id):
         match = get_object_or_404(Match, pk=match_id)
         try:
             services.finish_match(match)

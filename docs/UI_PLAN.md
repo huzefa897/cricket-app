@@ -85,3 +85,15 @@ To completely eliminate scorer errors during high-stress dismissal events, tappi
         - `[Edit]` buttons next to each row to jump backward and change a specific field.
         - A bottom `[Back]` button to return to the previous step.
         - A prominent **`[Confirm & Send]`** button that securely packages the configuration into the API payload and logs the delivery.
+
+## 4. End-of-Over Bowler Modal
+
+When an over completes (6 legal balls) and the innings is still live, the scorer must
+nominate the next bowler before scoring can continue.
+
+- **Trigger:** a `needsBowler` flag on the Scorer dashboard — true when `legal_balls_bowled`
+  is a positive multiple of 6, the innings is not complete, and openers are already set.
+- **Behavior:** the modal (`BowlerModal`) presents a single dropdown of the bowling side's
+  players; `[Confirm]` posts `{ bowler_id }` to `POST /api/matches/{id}/bowler/`.
+- **Guardrail:** the scoring matrix is hidden while the prompt is open, so no delivery can be
+  logged until a new bowler is chosen. The backend rejects the same bowler two overs in a row.

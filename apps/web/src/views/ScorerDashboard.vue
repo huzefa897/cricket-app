@@ -9,13 +9,20 @@ import ScoreHeader from '../components/ScoreHeader.vue'
 import OpenersModal from '../components/OpenersModal.vue'
 import WicketModal from '../components/WicketModal.vue'
 import ExtrasModal from '../components/ExtrasModal.vue'
+import BowlerModal from '../components/BowlerModal.vue'
 
 const props = defineProps<{ id: string | number }>()
 const router = useRouter()
 
 const store = useMatchStore()
-const { live, innings: inns, battingPlayers, bowlingPlayers, availableBatsmen, isLastWicket } =
-  storeToRefs(store)
+const {
+  live,
+  innings: inns,
+  battingPlayers,
+  bowlingPlayers,
+  availableBatsmen,
+  isLastWicket,
+} = storeToRefs(store)
 
 const busy = ref(false)
 const actionError = ref<string | null>(null)
@@ -28,6 +35,14 @@ onUnmounted(() => store.stopPolling())
 
 // --- State flags ---
 const needsOpeners = computed(() => !!inns.value && !inns.value.striker && !inns.value.is_completed)
+const needsBowler = computed(
+  () =>
+    !!inns.value &&
+    !!inns.value.striker &&
+    !inns.value.is_completed &&
+    inns.value.legal_balls_bowled > 0 &&
+    inns.value.legal_balls_bowled % 6 === 0,
+)
 const matchCompleted = computed(() => live.value?.status === 'COMPLETED')
 const needsTransition = computed(
   () => !!inns.value?.is_completed && inns.value.innings_number === 1 && !matchCompleted.value,
@@ -52,6 +67,9 @@ function runs(n: number) {
 }
 function submitOpeners(payload: OpenersPayload) {
   run(() => store.setOpeners(payload))
+}
+function submitBowler(payload: { bowler_id: number }) {
+  run(() => store.changeBowler(payload.bowler_id))
 }
 function onExtras(payload: BallPayload) {
   extrasKind.value = null
@@ -126,7 +144,7 @@ function finishMatch() {
     </div>
 
     <!-- Scoring matrix -->
-    <div v-else-if="inns && inns.striker && !inns.is_completed" class="space-y-2">
+    <div v-else-if="inns && inns.striker && !inns.is_completed && !needsBowler" class="space-y-2">
       <div class="grid grid-cols-4 gap-2">
         <button
           v-for="n in [0, 1, 2, 3]"
@@ -200,7 +218,7 @@ function finishMatch() {
       :bowling-players="battingPlayers"
       @confirm="submitTransition"
     />
-
+    <BowlerModal v-if="needsBowler" :bowling-players="bowlingPlayers" @confirm="submitBowler" />
     <WicketModal
       v-if="showWicket && inns?.striker && inns?.non_striker"
       :striker="inns.striker"
@@ -211,7 +229,12 @@ function finishMatch() {
       @cancel="showWicket = false"
     />
 
-    <ExtrasModal v-if="extrasKind" :kind="extrasKind" @confirm="onExtras" @cancel="extrasKind = null" />
+    <ExtrasModal
+      v-if="extrasKind"
+      :kind="extrasKind"
+      @confirm="onExtras"
+      @cancel="extrasKind = null"
+    />
 
     <!-- Finish confirmation -->
     <div

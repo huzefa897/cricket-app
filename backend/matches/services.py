@@ -133,6 +133,21 @@ def _player_in_team(player_id: int, team_id: int) -> Player:
 
 
 # --------------------------------------------------------------------------- #
+# Change Bowler
+# --------------------------------------------------------------------------- #
+def change_bowler(innings: Innings, *, bowler_id: int) -> Innings:
+    """Set the on-field bowler for the innings"""
+    bowler = _player_in_team(bowler_id, innings.bowling_team_id)
+    if bowler_id == innings.current_bowler_id:
+        raise ValidationError("Please select a different bowler")
+    if innings.is_completed:
+        raise ValidationError("Cannot record a change of bowler on innings complated")
+    innings.current_bowler = bowler
+    innings.save(update_fields=["current_bowler"])
+    return innings
+
+
+# --------------------------------------------------------------------------- #
 # Recording a delivery
 # --------------------------------------------------------------------------- #
 @transaction.atomic

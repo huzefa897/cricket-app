@@ -14,6 +14,7 @@ vi.mock('../api/client', () => ({
     getMatch: vi.fn(),
     getLive: vi.fn(),
     setOpeners: vi.fn(),
+    changeBowler: vi.fn(),
     recordBall: vi.fn(),
     transitionInnings: vi.fn(),
     finishMatch: vi.fn(),
@@ -66,7 +67,10 @@ const detailFixture: MatchDetail = {
     id: 2,
     name: 'Bravo',
     short_code: '',
-    players: [{ id: 5, name: 'B1', is_wicket_keeper: false, is_captain: false }],
+    players: [
+      { id: 5, name: 'B1', is_wicket_keeper: false, is_captain: false },
+      { id: 6, name: 'B2', is_wicket_keeper: false, is_captain: false },
+    ],
   },
   toss_winner: 'Alpha',
   toss_decision: 'BAT',
@@ -147,6 +151,24 @@ describe('ScorerDashboard integration', () => {
     expect(payload.wicket_type).toBe('BOWLED')
     expect(payload.player_dismissed_id).toBe(1)
     expect(payload.incoming_batsman_id).toBe(3)
+  })
+
+  it('prompts for a new bowler at the end of an over and blocks scoring', async () => {
+    // An over just completed: 6 legal balls, innings still live.
+    mockedApi.getLive.mockResolvedValue(liveFixture({ legal_balls_bowled: 6 }))
+    mockedApi.changeBowler.mockResolvedValue(liveFixture({ legal_balls_bowled: 6 }))
+    const wrapper = await mountDashboard()
+
+    // Scoring matrix is hidden, the bowler prompt is shown.
+    expect(wrapper.find('select').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Select Bowler')
+
+    // Pick B2 and confirm → store.changeBowler → api.changeBowler.
+    await wrapper.find('select').setValue(6)
+    await findBtn(wrapper, 'Confirm').trigger('click')
+    await flushPromises()
+
+    expect(mockedApi.changeBowler).toHaveBeenCalledWith(1, 6)
   })
 
   it('finishing the match calls the finish endpoint and locks scoring', async () => {

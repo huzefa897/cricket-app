@@ -46,6 +46,10 @@ class OpenersSerializer(serializers.Serializer):
     bowler_id = serializers.IntegerField()
 
 
+class BowlerChangeSerializer(serializers.Serializer):
+    bowler_id = serializers.IntegerField()
+
+
 class BallInputSerializer(serializers.Serializer):
     runs_scored_bat = serializers.IntegerField(min_value=0, max_value=6, default=0)
     extra_type = serializers.ChoiceField(choices=ExtraType.values, default=ExtraType.NONE)

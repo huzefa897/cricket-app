@@ -57,6 +57,39 @@ class TestSetOpeners:
 
 
 # --------------------------------------------------------------------------- #
+# Change bowler
+# --------------------------------------------------------------------------- #
+class TestChangeBowler:
+    def test_sets_a_new_bowler(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)
+        # Opener bowler is two[0]; switch to a different bowling-team player.
+        services.change_bowler(inns, bowler_id=meta["two"][1])
+        inns.refresh_from_db()
+        assert inns.current_bowler_id == meta["two"][1]
+
+    def test_rejects_a_batting_team_player(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)
+        with pytest.raises(ValidationError):
+            services.change_bowler(inns, bowler_id=meta["one"][2])  # batting side
+
+    def test_rejects_same_bowler_two_overs_in_a_row(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)
+        with pytest.raises(ValidationError):
+            services.change_bowler(inns, bowler_id=meta["two"][0])  # current bowler
+
+    def test_rejects_change_on_completed_innings(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)
+        services.finish_match(match)
+        inns.refresh_from_db()
+        with pytest.raises(ValidationError):
+            services.change_bowler(inns, bowler_id=meta["two"][1])
+
+
+# --------------------------------------------------------------------------- #
 # Recording deliveries
 # --------------------------------------------------------------------------- #
 class TestRecordBall:
