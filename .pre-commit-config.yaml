@@ -1,11 +1,26 @@
+# Pre-commit hooks for the whole repo.
+#   Backend (Python)  -> Ruff lint (--fix) + Ruff format
+#   Frontend (.ts/.vue) -> Prettier
+# Install once with:  cd backend && pipenv run pre-commit install
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
+    rev: v0.6.9
     hooks:
-      # Run the linter with auto-fix enabled
+      # Lint with auto-fix, backend only.
       - id: ruff
         args: [--fix]
         files: ^backend/
-      # Run the formatter
+      # Format, backend only.
       - id: ruff-format
         files: ^backend/
+
+  - repo: local
+    hooks:
+      # Prettier runs in an isolated pre-commit-managed node env, so it needs
+      # no global install and uses the repo-root .prettierrc.json.
+      - id: prettier
+        name: prettier (frontend)
+        entry: prettier --write
+        language: node
+        additional_dependencies: ['prettier@3.9.6']
+        files: ^apps/web/src/.*\.(ts|vue)$
