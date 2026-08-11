@@ -18,7 +18,10 @@ type Wrapper = ReturnType<typeof mountModal>
 // Click the first button whose text contains `text` (avoids the header Cancel btn).
 async function clickBtn(wrapper: Wrapper, text: string) {
   const btn = wrapper.findAll('button').find((b) => b.text().includes(text))
-  if (!btn) throw new Error(`No button matching "${text}". Have: ${wrapper.findAll('button').map((b) => b.text())}`)
+  if (!btn)
+    throw new Error(
+      `No button matching "${text}". Have: ${wrapper.findAll('button').map((b) => b.text())}`,
+    )
   await btn.trigger('click')
 }
 

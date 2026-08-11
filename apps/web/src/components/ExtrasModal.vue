@@ -54,11 +54,17 @@ function confirm() {
 
       <div>
         <p class="text-sm text-slate-500 mb-1">
-          {{ kind === 'WIDE' ? 'Extra runs run' : kind === 'NO_BALL' ? 'Runs off the bat' : 'Runs run' }}
+          {{
+            kind === 'WIDE'
+              ? 'Extra runs run'
+              : kind === 'NO_BALL'
+                ? 'Runs off the bat'
+                : 'Runs run'
+          }}
         </p>
         <div class="flex flex-wrap gap-2">
           <button
-            v-for="n in (kind === 'NO_BALL' ? [0, 1, 2, 3, 4, 6] : [0, 1, 2, 3, 4])"
+            v-for="n in kind === 'NO_BALL' ? [0, 1, 2, 3, 4, 6] : [0, 1, 2, 3, 4]"
             :key="n"
             class="w-12 h-12 rounded-lg font-bold border"
             :class="runs === n ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'"

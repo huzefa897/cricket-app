@@ -101,7 +101,9 @@ function confirm() {
               v-for="n in [0, 1, 2, 3]"
               :key="n"
               class="font-bold rounded-lg py-3 active:scale-95"
-              :class="runsCompleted === n ? 'bg-runs text-white' : 'bg-canvas border text-slate-600'"
+              :class="
+                runsCompleted === n ? 'bg-runs text-white' : 'bg-canvas border text-slate-600'
+              "
               @click="runsCompleted = n"
             >
               {{ n }}
@@ -173,7 +175,8 @@ function confirm() {
             ><span class="font-semibold">{{ wicketType?.replace('_', ' ') }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-500">Out</span><span class="font-semibold">{{ dismissedName }}</span>
+            <span class="text-slate-500">Out</span
+            ><span class="font-semibold">{{ dismissedName }}</span>
           </div>
           <div v-if="isRunOut" class="flex justify-between">
             <span class="text-slate-500">Runs</span

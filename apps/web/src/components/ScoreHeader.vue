@@ -17,13 +17,21 @@ withDefaults(defineProps<{ live: LiveState; big?: boolean }>(), { big: false })
         <span :class="big ? 'text-5xl' : 'text-4xl'" class="font-extrabold text-slate-800">
           {{ live.innings.total_runs }}/{{ live.innings.total_wickets }}
         </span>
-        <span class="text-slate-500 font-medium">({{ live.innings.overs }} / {{ live.total_overs }})</span>
+        <span class="text-slate-500 font-medium"
+          >({{ live.innings.overs }} / {{ live.total_overs }})</span
+        >
       </div>
 
       <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
-        <span>CRR <b class="text-slate-700">{{ live.innings.crr }}</b></span>
-        <span v-if="live.innings.rrr !== null">RRR <b class="text-slate-700">{{ live.innings.rrr }}</b></span>
-        <span v-if="live.innings.target">Target <b class="text-slate-700">{{ live.innings.target }}</b></span>
+        <span
+          >CRR <b class="text-slate-700">{{ live.innings.crr }}</b></span
+        >
+        <span v-if="live.innings.rrr !== null"
+          >RRR <b class="text-slate-700">{{ live.innings.rrr }}</b></span
+        >
+        <span v-if="live.innings.target"
+          >Target <b class="text-slate-700">{{ live.innings.target }}</b></span
+        >
       </div>
 
       <div v-if="live.innings.target" class="text-sm text-boundary font-semibold">

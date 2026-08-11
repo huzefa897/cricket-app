@@ -130,7 +130,9 @@ async function startMatch() {
           v-for="o in oversPresets"
           :key="o"
           class="px-4 py-2 rounded-lg font-semibold border"
-          :class="totalOvers === o ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'"
+          :class="
+            totalOvers === o ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'
+          "
           @click="totalOvers = o"
         >
           {{ o }}
@@ -152,7 +154,11 @@ async function startMatch() {
           v-for="ti in tossOptions"
           :key="ti"
           class="px-4 py-3 rounded-lg font-semibold border truncate"
-          :class="tossWinnerIndex === ti ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'"
+          :class="
+            tossWinnerIndex === ti
+              ? 'bg-system text-white border-system'
+              : 'bg-canvas text-slate-600'
+          "
           @click="tossWinnerIndex = ti"
         >
           {{ teams[ti - 1].name || `Team ${ti}` }}
@@ -164,7 +170,9 @@ async function startMatch() {
           v-for="d in decisionOptions"
           :key="d"
           class="px-4 py-3 rounded-lg font-semibold border"
-          :class="tossDecision === d ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'"
+          :class="
+            tossDecision === d ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'
+          "
           @click="tossDecision = d"
         >
           {{ d === 'BAT' ? 'Bat first' : 'Bowl first' }}

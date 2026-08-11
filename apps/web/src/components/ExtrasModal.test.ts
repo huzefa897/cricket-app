@@ -8,10 +8,16 @@ function mountModal(kind: ExtrasKind) {
 }
 
 async function clickRun(wrapper: ReturnType<typeof mountModal>, n: number) {
-  await wrapper.findAll('button').find((b) => b.text() === String(n))!.trigger('click')
+  await wrapper
+    .findAll('button')
+    .find((b) => b.text() === String(n))!
+    .trigger('click')
 }
 async function send(wrapper: ReturnType<typeof mountModal>) {
-  await wrapper.findAll('button').find((b) => b.text() === 'Send')!.trigger('click')
+  await wrapper
+    .findAll('button')
+    .find((b) => b.text() === 'Send')!
+    .trigger('click')
 }
 
 describe('ExtrasModal', () => {

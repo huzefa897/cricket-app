@@ -55,7 +55,9 @@ onUnmounted(() => store.stopPolling())
       </div>
       <div v-if="inns.bowler" class="flex justify-between border-t pt-2 text-sm text-slate-500">
         <span>{{ inns.bowler.name }}</span>
-        <span>{{ inns.bowler.overs }}–{{ inns.bowler.runs_conceded }}–{{ inns.bowler.wickets }}</span>
+        <span
+          >{{ inns.bowler.overs }}–{{ inns.bowler.runs_conceded }}–{{ inns.bowler.wickets }}</span
+        >
       </div>
     </div>
   </div>
