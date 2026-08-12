@@ -15,10 +15,27 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.http import FileResponse, Http404
+from django.urls import include, path, re_path
+
+
+def spa_index(request):
+    """Serve the built SPA's index.html for any non-API route (history fallback).
+
+    Client-side routes like /match/1/score are not real files, so WhiteNoise 404s
+    and Django falls through to here. Absent build (local dev) -> 404, which is fine.
+    """
+    index = settings.FRONTEND_DIR / "index.html"
+    if not index.exists():
+        raise Http404("Frontend build not found. Run the Vite build or use the dev server.")
+    return FileResponse(open(index, "rb"))
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("matches.urls")),
+    # Catch-all: everything except api/, admin/, static/ serves the SPA shell.
+    re_path(r"^(?!api/|admin/|static/).*$", spa_index),
 ]

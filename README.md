@@ -55,6 +55,20 @@ pnpm nx run web:test               # frontend (Vitest)
 pnpm nx run web:typecheck          # frontend types (vue-tsc)
 ```
 
+## Run with Docker (field deployment)
+
+A single multi-stage image builds the Vue SPA and runs Django (gunicorn), which
+serves both the app and the `/api` from **one origin on port 80** — so phones on
+the ground only need `http://<laptop-LAN-ip>/`. The SQLite database persists in
+a named volume across restarts.
+
+```bash
+docker compose up --build          # http://localhost/
+```
+
+Migrations run automatically on startup. Config is via env (see `docker-compose.yml`):
+`DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_DB_PATH`.
+
 ## Status
 
 ✅ **Pre-phase 1 complete** — Nx + pnpm monorepo, Pipenv Django backend, Vue 3 + Vite
