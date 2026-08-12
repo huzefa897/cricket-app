@@ -1,0 +1,23 @@
+# Local, single-service deployment — the "laptop at the ground" setup.
+#   docker compose up --build   -> http://localhost/  (and http://<laptop-LAN-ip>/ for phones)
+services:
+  howzatt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      # Default to port 80 so phones open http://cricket.local/ with no port.
+      # Override for local dev if 80 is taken: HOWZATT_PORT=8000 docker compose up
+      - "${HOWZATT_PORT:-80}:8000"
+    environment:
+      # Permissive for local field use; tighten for cloud (Phase 3).
+      DJANGO_DEBUG: "0"
+      DJANGO_ALLOWED_HOSTS: "*"
+      DJANGO_DB_PATH: /app/data/db.sqlite3
+    volumes:
+      # Persist the SQLite database across container restarts / rebuilds.
+      - howzatt-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  howzatt-data:

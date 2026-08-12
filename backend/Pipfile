@@ -6,6 +6,10 @@ name = "pypi"
 [packages]
 django = "~=4.2"
 djangorestframework = "~=3.14"
+# Serves static assets + the built SPA straight from Django (single-container Docker).
+whitenoise = "~=6.6"
+# Production WSGI server used by the Docker image (runserver stays for local dev).
+gunicorn = "~=22.0"
 # NOTE: Phase 1 uses SQLite (bundled with Python) — no external DB driver needed.
 # psycopg2-binary is added in Phase 3 for the Postgres migration only.
 

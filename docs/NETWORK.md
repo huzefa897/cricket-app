@@ -481,7 +481,7 @@ The production architecture becomes:
                        │
                   cricket.local
                        │
-                  Docker :8000
+                  Docker :80
                        │
              ┌─────────┴─────────┐
              │                   │
@@ -513,7 +513,7 @@ services:
   app:
     build: .
     ports:
-      - "8000:8000"
+      - "80:8000"
 
     volumes:
       - sqlite_data:/app/data
@@ -536,7 +536,7 @@ Then:
 ```
 Phone
   ↓
-cricket.local:8000
+cricket.local
   ↓
 Mac
   ↓
@@ -549,7 +549,7 @@ Django
 
 # 12. Prefer One Production Origin
 
-The ideal production experience is:
+The ideal production experience is one user-facing origin:
 
 ```
 http://cricket.local/
@@ -559,7 +559,7 @@ rather than:
 
 ```
 http://cricket.local:5173/
-http://cricket.local:8000/api/
+separate frontend and API ports
 ```
 
 The application should expose:
@@ -597,7 +597,7 @@ docker compose up -d --build
 On the Mac:
 
 ```bash
-curl http://localhost:8000/
+curl http://localhost/
 ```
 
 or open:
@@ -676,13 +676,13 @@ localhost:5173
                   SQLite
 ```
 
-Run:
+For a production-like single-origin build, run:
 
 ```bash
 docker compose up
 ```
 
-or run Django/Vite independently during development.
+For active development, run Django/Vite independently.
 
 ---
 

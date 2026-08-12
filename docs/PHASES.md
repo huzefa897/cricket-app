@@ -200,6 +200,7 @@ repos:
 *Focus: Fixing real-world friction points discovered during actual weekend matches.*
 
 - **Error Correction & Undo:** Add robust "Undo last ball" or "Edit past ball" features (crucial for cricket since scorers make mistakes).
+- **Access Control (Scorer Passcode):** Gate the scoring/edit screens behind a shared passcode so only the scorer can change the score, while spectators get an open, read-only **viewer view**. Lightweight and offline-friendly — no user accounts yet. Full account-based auth with Admin/Viewer roles lands in Phase 3.
 - **UI/UX Optimization:** High-contrast mode for bright sunlight outdoors, larger touch targets for frantic scoring, and keyboard shortcuts if scoring from a laptop.
 - **Enhanced Match States:** Support for Super Overs, DLS method (optional/basic), retired hurt/batsman changes, and penalty runs.
 - **Export Options:** Ability to export match scorecards as an image (for WhatsApp groups) or a PDF.
@@ -213,7 +214,7 @@ repos:
     - Deploy the Django backend container to a cloud host (e.g., Render, Fly.io, or AWS).
     - Deploy the Vue frontend to a static CDN (e.g., Vercel or Netlify).
 - **Real-Time Live Streaming:** Implement WebSockets (or polling) so remote spectators see score updates instantly without refreshing the page.
-- **User Accounts & Authentication:** Allow users to sign up, log in, and claim "Admin" rights for their specific team or match.
+- **User Accounts & Role-Based Auth:** Allow users to sign up and log in, with distinct **Admin** and **Viewer** roles (building on the Phase 2 scorer passcode) — Admins claim rights to their team/match, Viewers get read-only access.
 
 ### Phase 4: Tournaments & Leagues (The Expansion)
 

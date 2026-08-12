@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,12 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-@vtakg^qdy0&1h!mtab9g-(62tk)7ggw_z7+&c8^ppt#99vox4"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Overridable via env so the Docker image can be tightened without code change.
+DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 
 # Field deployment serves over the local network (phones on the Cricket Wi-Fi),
 # so allow the local hostname and LAN access. See docs/NETWORK.md.
-# DEBUG=True keeps this permissive for Phase 1; tighten for cloud (Phase 3).
-ALLOWED_HOSTS = ["*"]
+# Permissive default for Phase 1; override DJANGO_ALLOWED_HOSTS for cloud (Phase 3).
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
 
 
 # Application definition
@@ -48,6 +50,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # WhiteNoise serves static assets (and the built SPA) straight from Django.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -83,7 +87,9 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        # In Docker this points at a mounted volume (DJANGO_DB_PATH) so the match
+        # data survives container restarts; locally it defaults next to manage.py.
+        "NAME": os.environ.get("DJANGO_DB_PATH", BASE_DIR / "db.sqlite3"),
     }
 }
 
@@ -123,6 +129,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# The Docker build copies the Vue build output (apps/web/dist) here. When present,
+# WhiteNoise serves it at the site root: index.html at "/", hashed assets at "/assets/…".
+# Absent in local dev (where Vite serves the SPA), so this stays None and nothing breaks.
+FRONTEND_DIR = BASE_DIR / "frontend"
+WHITENOISE_ROOT = FRONTEND_DIR if FRONTEND_DIR.exists() else None
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
