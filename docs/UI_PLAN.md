@@ -1,5 +1,3 @@
-# UI_UX.md
-
 # Cricket Score-Keeping Application: UI/UX Master Plan & Design Architecture
 
 ## 1. General Design Principles & Environment
@@ -7,51 +5,67 @@
 - **Primary Context:** Outdoor use under bright sunlight (requires high-contrast themes and bold, legible fonts).
 - **Device Priority:** Mobile-first layout optimized for thumb-reach on smartphones (since scorers are actively tapping inputs from the boundary or dugout).
 - **Frictionless Navigation:** Minimal menus, zero clunky pop-ups outside of critical error workflows, and large touch targets to prevent accidental mis-taps.
+- **Functional Color:** Strong color communicates scoring action, selection, status,
+  or feedback. Utility pages remain visually quieter than the scoring console.
+- **Theme Consistency:** Frosted and Classic Light preserve the same workflows and
+  meanings. Theme selection is presentation-only and persists on the device.
+- **Accessible Motion:** Transitions communicate route or modal state and respect
+  `prefers-reduced-motion`.
 
 ---
 
 ## 2. Screen-by-Screen Breakdown & User Flow
 
-### A. Match Setup Screen (`/setup`)
+### A. Home Screen (`/`)
+
+- **Purpose:** Entry point for starting, resuming, or reviewing a match.
+- **Current Behavior:**
+    - Polls the match list every 5 seconds and shows active matches under **Live now**.
+    - Live cards show teams, current batting summary, overs, and a shared `LIVE` badge.
+    - Tapping a live card resumes the scorer route.
+    - Primary and secondary actions open Match Setup and Match History.
+
+### B. Match Setup Screen (`/setup`)
 
 - **Target User:** Scorer / Admin preparing the game before the first ball.
-- **Layout & Components:**
-    - **Team Identification:** Text fields for Team 1 and Team 2 featuring smart autocomplete that queries past SQLite records.
-    - **Dynamic Roster Builder:**
-        - A search-and-add bar (`"Add player to squad..."`). Typing pulls matches from database records, while a secondary `"Add New"` action instantly saves brand-new players on the fly.
-        - A live badge/checklist showing current squad counts (e.g., 11/11 players added) with quick remove ("X") buttons.
-    - **Match Configuration Panel:**
-        - Overs selector (quick-select pills or numerical input).
-        - Toss winner toggles (Team 1 vs Team 2) and toss decision buttons (`Bat` or `Bowl`).
-    - **Primary Action:** A full-width, high-visibility **"Start Match & Open Scorer"** button that initializes the database and routes the user.
+- **Current Behavior:**
+    - Accepts ad-hoc team names, optional short codes, and on-the-fly player names.
+    - Displays removable player chips and a live player count for each team.
+    - Provides preset/custom overs, toss-winner toggles, and Bat/Bowl decision toggles.
+    - Requires both team names and at least two players per side. The disabled
+      primary action includes a short validation hint explaining what is missing.
+    - **Start Match & Open Scorer** creates the match and routes to scoring.
 
-### B. Scorer Dashboard (`/match/{id}/score`)
+### C. Scorer Dashboard (`/match/{id}/score`)
 
 - **Target User:** The active scorer tapping inputs rapidly under pressure.
-- **Layout & Components:**
-    - **Live Match Header (Sticky Top):** Compact summary showing current score/wickets (`124/3`), overs bowled (`14.2`), Run Rate (CRR/RRR), and target.
-    - **Active Players Panel:** Two clean rows indicating Striker runs/balls, Non-Striker runs/balls, and the current Bowler's figures.
-    - **The Scoring Matrix (Thumb-Friendly Grid):**
-        - *Row 1:* `0 (Dot)` | `1` | `2` | `3`
-        - *Row 2:* `4 (Boundary)` | `6 (Boundary)`
-        - *Row 3:* `Wide` | `No Ball` | `Bye / Leg Bye`
-        - *Row 4:* Full-width prominent `Wicket!` button (triggers the Wicket Wizard modal).
-    - **Bottom Control Bar:** An **"Undo Last Ball"** safety button and a quick link to inspect the full scorecard.
+- **Current Behavior:**
+    - Renders the dashboard component associated with the selected theme.
+    - Shows score/wickets, overs, CRR/RRR/target, active batters, bowler figures,
+      and the current-over ticker.
+    - Keeps the thumb-friendly grid for dot/1/2/3, 4/6, extras, and wicket.
+    - Frosted uses a single-column phone layout and a two-column console on larger screens.
+    - Prompts for openers, innings transition, and a new bowler when required.
+    - Supports manual match finish with confirmation and routes completed matches to the scorecard view.
+    - Exposes theme settings from the scorer screen and persists the choice locally.
+    - Displays API/action failures through the reusable toast above modal layers.
 
-### C. Viewer Live Dashboard (`/match/{id}/live`)
+### D. Viewer Live Dashboard (`/match/{id}/live`)
 
 - **Target User:** Teammates, substitutes, or remote spectators viewing from their own devices.
-- **Layout & Components:**
-    - **Read-Only Clean Display:** Scaled-up graphics for score and run rate so it can be glanced at from a distance.
-    - **Over Ticker History:** A horizontal scrolling ticker mapping the current over deliveries (e.g., `[1] [4] [W] [0] [2] [nb]`).
-    - **Tabbed Navigation:** Quick toggle between the live scoreboard view and full batting/bowling statistics tables.
+- **Current Behavior:**
+    - Polls every 3 seconds and renders a larger read-only score summary.
+    - Shows a horizontal current-over ticker and current batter/bowler figures.
+    - Shows a completed-match banner when scoring is locked.
 
-### D. Local Match History (`/history`)
+### E. Local Match History (`/history`)
 
 - **Target User:** Anyone reviewing past weekend fixtures.
-- **Layout & Components:**
-    - Chronological list of completed matches stored locally in SQLite.
-    - Tapping a match card expands or opens a detailed post-match summary displaying the winning margin, top run-scorer, and full match scorecards.
+- **Current Behavior:**
+    - Lists locally stored matches with teams, overs, creation time, and status.
+    - Uses a shared live badge plus distinct completed/upcoming badges.
+    - Tapping a live/upcoming match opens scoring; tapping a completed match opens
+      the read-only live/scorecard route.
 
 ---
 
@@ -97,3 +111,27 @@ nominate the next bowler before scoring can continue.
   players; `[Confirm]` posts `{ bowler_id }` to `POST /api/matches/{id}/bowler/`.
 - **Guardrail:** the scoring matrix is hidden while the prompt is open, so no delivery can be
   logged until a new bowler is chosen. The backend rejects the same bowler two overs in a row.
+
+## 5. Shipped Design System Additions
+
+The post-MVP UI expansion introduced:
+
+- Theme registry and shared scorer dashboard contract.
+- Frosted and Classic Light dashboards.
+- Device-local theme persistence and a Settings modal.
+- Shared `LiveBadge`, utility buttons, toggles, chips, list cards, badges, and hints.
+- Route, modal, and list transitions with reduced-motion handling.
+- Reusable toast variants for error, success, info, and warning feedback.
+
+See [PALETTE.md](PALETTE.md) for color roles and implementation rules.
+
+## 6. Deferred UI Scope
+
+These items appeared in the original design plan but are not implemented yet:
+
+- Smart team/player autocomplete and permanent directories.
+- Undo or edit-last-ball controls.
+- Viewer tabs and complete batting/bowling scorecard tables.
+- Expanded history summaries with winner, top scorer, and full scorecards.
+- Dedicated sunlight/high-contrast mode validated through field testing.
+- Scorer passcode or account-based route protection.

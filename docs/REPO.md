@@ -13,6 +13,7 @@ with **Tailwind CSS**. All backend and frontend tasks run from the repo root via
 howzatt/
 ├── .tool-versions              # asdf versions (python, node, pnpm)
 ├── .pre-commit-config.yaml     # Pre-commit hooks with Ruff auto-fix
+├── .claude/launch.json         # Local web dev-server launch configuration
 ├── pnpm-workspace.yaml         # pnpm workspace definition (backend, apps/*)
 ├── nx.json                     # Nx workspace orchestrator config
 ├── package.json                # Root scripts (api:serve, web:serve, api:migrate…)
@@ -47,11 +48,22 @@ howzatt/
             ├── App.vue
             ├── types.ts        # Shared domain types (mirror the API)
             ├── api/            # client.ts — typed fetch wrapper (relative /api)
-            ├── stores/         # Pinia stores: match.ts (+ .test.ts)
+            ├── stores/         # Pinia: match state and persisted preferences
             ├── router/         # Route table (/setup, /match/:id/score, …)
-            ├── views/          # Setup, ScorerDashboard, ViewerLive, History (.vue)
-            └── components/     # ScoreHeader, WicketModal, ExtrasModal, OpenersModal, BowlerModal (+ .test.ts)
+            ├── designs/        # Theme registry, dashboard contract, Classic/Frosted dashboards
+            ├── views/          # Home, Setup, ScorerDashboard, ViewerLive, History
+            └── components/     # Score/modals plus LiveBadge, SettingsModal, Toast
 ```
+
+## Frontend Design Architecture
+
+- `App.vue` applies `data-theme` to the root element and owns route transitions.
+- `stores/preferences.ts` persists the selected theme in `localStorage`.
+- `designs/registry.ts` maps each theme to an app skin and scorer dashboard.
+- `designs/contract.ts` keeps scorer behavior independent from its visual design.
+- `style.css` owns app-wide theme overrides, dedicated console treatments,
+  utility controls, semantic statuses, and reusable motion.
+- Views own workflow and data; they should not contain theme-ID conditionals.
 
 ## Testing
 
