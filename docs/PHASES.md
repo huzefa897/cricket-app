@@ -195,6 +195,26 @@ repos:
     - **Viewer:** Read-only view for teammates/spectators connected to the local network.
 - **Match History:** Save completed games to local SQLite storage to view past match summaries and scorecards.
 
+### Phase 1.1: Delivered UI Expansion
+
+*Focus: Improving presentation and navigation beyond the original MVP without
+expanding the cricket rules engine.*
+
+- **Theme System:** Added persisted Frosted and Classic Light themes. Each theme
+  supplies an app-wide skin and a scorer dashboard through a shared contract.
+- **Frosted Design Direction:** Added the violet/orange background world,
+  frosted read surfaces, solid high-contrast scoring controls, and a consistent
+  shared control vocabulary for utility routes.
+- **Home Live Matches:** Added polling, live summaries, consistent status badges,
+  and direct resume-scoring actions on the Home screen.
+- **Utility UI System:** Added shared buttons, toggles, chips, validation hints,
+  list cards, completion/upcoming badges, and clearer disabled/form states.
+- **Feedback and Motion:** Added route, modal, and list transitions; reduced-motion
+  handling; settings UI; and reusable toast notifications.
+- **Scope Boundary:** This phase does not include authentication, undo/edit,
+  permanent team directories, smart roster autocomplete, or complete scorecard
+  tables. Those items remain in later phases.
+
 ### Phase 2: Polish & Field Testing (The Real-World Loop)
 
 *Focus: Fixing real-world friction points discovered during actual weekend matches.*
@@ -213,7 +233,8 @@ repos:
     - Migrate SQLite to a managed cloud database (e.g., PostgreSQL).
     - Deploy the Django backend container to a cloud host (e.g., Render, Fly.io, or AWS).
     - Deploy the Vue frontend to a static CDN (e.g., Vercel or Netlify).
-- **Real-Time Live Streaming:** Implement WebSockets (or polling) so remote spectators see score updates instantly without refreshing the page.
+- **Real-Time Live Streaming:** Replace local Phase 1 HTTP polling with WebSockets
+  or another cloud-scale push mechanism so remote spectators see updates promptly.
 - **User Accounts & Role-Based Auth:** Allow users to sign up and log in, with distinct **Admin** and **Viewer** roles (building on the Phase 2 scorer passcode) — Admins claim rights to their team/match, Viewers get read-only access.
 
 ### Phase 4: Tournaments & Leagues (The Expansion)
