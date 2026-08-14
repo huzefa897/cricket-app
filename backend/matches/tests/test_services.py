@@ -80,6 +80,20 @@ class TestChangeBowler:
         with pytest.raises(ValidationError):
             services.change_bowler(inns, bowler_id=meta["two"][0])  # current bowler
 
+    def test_rejects_the_bowler_who_bowled_the_previous_over(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)  # opener bowler is two[0]
+        for _ in range(6):  # complete the over → current_bowler is cleared
+            services.record_ball(inns, runs_scored_bat=0)
+        inns.refresh_from_db()
+        assert inns.current_bowler_id is None
+        with pytest.raises(ValidationError):
+            services.change_bowler(inns, bowler_id=meta["two"][0])  # bowled last over
+        # A different bowler is fine.
+        services.change_bowler(inns, bowler_id=meta["two"][1])
+        inns.refresh_from_db()
+        assert inns.current_bowler_id == meta["two"][1]
+
     def test_rejects_change_on_completed_innings(self, opened_match):
         match, meta = opened_match
         inns = active_innings(match)
@@ -269,11 +283,16 @@ class TestWickets:
 # --------------------------------------------------------------------------- #
 class TestInningsFlow:
     def test_overs_exhausted_completes_innings(self, opened_match):
-        match, _ = opened_match  # 2 overs
+        match, meta = opened_match  # 2 overs
         for _ in range(12):
             inns = active_innings(match)
             if inns is None:
                 break
+            if inns.current_bowler_id is None:  # bowler cleared at over's end
+                # Alternate bowlers — the same one can't bowl consecutive overs.
+                services.change_bowler(
+                    inns, bowler_id=meta["two"][(inns.legal_balls_bowled // 6) % 2]
+                )
             services.record_ball(inns, runs_scored_bat=0)
         first = match.innings.get(innings_number=1)
         assert first.legal_balls_bowled == 12
@@ -288,6 +307,11 @@ class TestInningsFlow:
             inns = active_innings(match)
             if inns is None:
                 break
+            if inns.current_bowler_id is None:  # bowler cleared at over's end
+                # Alternate bowlers — the same one can't bowl consecutive overs.
+                services.change_bowler(
+                    inns, bowler_id=meta["two"][(inns.legal_balls_bowled // 6) % 2]
+                )
             services.record_ball(inns, runs_scored_bat=0)
 
         second = services.transition_innings(
@@ -308,6 +332,11 @@ class TestInningsFlow:
             inns = active_innings(match)
             if inns is None:
                 break
+            if inns.current_bowler_id is None:  # bowler cleared at over's end
+                # Alternate bowlers — the same one can't bowl consecutive overs.
+                services.change_bowler(
+                    inns, bowler_id=meta["two"][(inns.legal_balls_bowled // 6) % 2]
+                )
             services.record_ball(inns, runs_scored_bat=0)
         services.transition_innings(
             match,

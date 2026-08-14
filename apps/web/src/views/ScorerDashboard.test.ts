@@ -154,8 +154,9 @@ describe('ScorerDashboard integration', () => {
   })
 
   it('prompts for a new bowler at the end of an over and blocks scoring', async () => {
-    // An over just completed: 6 legal balls, innings still live.
-    mockedApi.getLive.mockResolvedValue(liveFixture({ legal_balls_bowled: 6 }))
+    // An over just completed: the backend clears the bowler, innings still live.
+    mockedApi.getLive.mockResolvedValue(liveFixture({ legal_balls_bowled: 6, bowler: null }))
+    // Picking a bowler resolves to a state that has one again → prompt clears.
     mockedApi.changeBowler.mockResolvedValue(liveFixture({ legal_balls_bowled: 6 }))
     const wrapper = await mountDashboard()
 
@@ -169,6 +170,27 @@ describe('ScorerDashboard integration', () => {
     await flushPromises()
 
     expect(mockedApi.changeBowler).toHaveBeenCalledWith(1, 6)
+    // The prompt is gone now that a bowler is set (the deadlock is fixed).
+    expect(wrapper.find('select').exists()).toBe(false)
+  })
+
+  it('shows a toast above the modal when the bowler pick is rejected', async () => {
+    mockedApi.getLive.mockResolvedValue(liveFixture({ legal_balls_bowled: 6, bowler: null }))
+    // Backend rejects: same bowler two overs running.
+    mockedApi.changeBowler.mockRejectedValue(
+      new Error("The last bowler and next bowler can't be the same."),
+    )
+    const wrapper = await mountDashboard()
+
+    await wrapper.find('select').setValue(5)
+    await findBtn(wrapper, 'Confirm').trigger('click')
+    await flushPromises()
+
+    // The toast (role="alert") carries the message and the modal stays open.
+    const toast = wrapper.find('[role="alert"]')
+    expect(toast.exists()).toBe(true)
+    expect(toast.text()).toContain("last bowler and next bowler can't be the same")
+    expect(wrapper.find('select').exists()).toBe(true)
   })
 
   it('finishing the match calls the finish endpoint and locks scoring', async () => {

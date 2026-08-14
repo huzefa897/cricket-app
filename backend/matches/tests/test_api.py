@@ -61,6 +61,27 @@ class TestMatchApi:
         assert res.status_code == 200
         assert len(res.json()) == 1
 
+    def test_list_includes_live_summary_for_live_matches(self, client):
+        match = create_match(client)
+        set_openers(client, match)
+        client.post(f"/api/matches/{match['id']}/balls/", {"runs_scored_bat": 4}, format="json")
+
+        row = next(m for m in client.get("/api/matches/").json() if m["id"] == match["id"])
+        assert row["live_summary"] == {
+            "innings_number": 1,
+            "batting_team": "Strikers",
+            "total_runs": 4,
+            "total_wickets": 0,
+            "overs": "0.1",
+        }
+
+    def test_list_live_summary_is_null_when_not_live(self, client):
+        match = create_match(client)
+        client.post(f"/api/matches/{match['id']}/finish/")  # -> COMPLETED
+        row = next(m for m in client.get("/api/matches/").json() if m["id"] == match["id"])
+        assert row["status"] == "COMPLETED"
+        assert row["live_summary"] is None
+
     def test_record_ball_updates_live_state(self, client):
         match = create_match(client)
         set_openers(client, match)

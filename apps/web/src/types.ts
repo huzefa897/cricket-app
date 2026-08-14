@@ -19,6 +19,14 @@ export interface Team {
   players: Player[]
 }
 
+export interface LiveSummary {
+  innings_number: number
+  batting_team: string
+  total_runs: number
+  total_wickets: number
+  overs: string
+}
+
 export interface MatchListItem {
   id: number
   team_one: string
@@ -26,6 +34,7 @@ export interface MatchListItem {
   total_overs: number
   status: MatchStatus
   created_at: string
+  live_summary: LiveSummary | null
 }
 
 export interface InningsSummary {
