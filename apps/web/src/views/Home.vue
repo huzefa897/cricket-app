@@ -40,7 +40,7 @@ function summary(m: MatchListItem): string {
 
 <template>
   <div class="space-y-4 pt-6">
-    <div class="bg-card rounded-xl shadow-sm p-6 text-center">
+    <div class="hero-glass bg-card rounded-xl shadow-sm p-6 text-center">
       <h1 class="text-2xl font-bold text-system">🏏 Howzatt</h1>
       <p class="text-slate-500 mt-1">Local-first cricket scoring for weekend matches.</p>
     </div>
@@ -61,32 +61,27 @@ function summary(m: MatchListItem): string {
         <button
           v-for="m in liveMatches"
           :key="m.id"
-          class="w-full text-left bg-card rounded-xl shadow-sm p-4 active:scale-[0.99] border border-boundary/20"
+          class="list-card border border-boundary/20"
           @click="router.push(`/match/${m.id}/score`)"
         >
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-semibold text-slate-700 truncate">
+          <div class="min-w-0 flex-1 text-left">
+            <span class="font-semibold text-slate-700 truncate block">
               {{ m.team_one }} vs {{ m.team_two }}
             </span>
-            <LiveBadge class="shrink-0" />
+            <p class="num text-sm text-slate-500 mt-1">{{ summary(m) }}</p>
+            <p class="text-xs text-slate-400 mt-0.5">{{ m.total_overs }} overs</p>
           </div>
-          <p class="text-sm text-slate-500 mt-1">{{ summary(m) }}</p>
-          <p class="text-xs text-slate-400 mt-0.5">{{ m.total_overs }} overs</p>
+          <LiveBadge class="shrink-0" />
+          <span class="chev">›</span>
         </button>
       </TransitionGroup>
     </section>
 
-    <button
-      class="w-full bg-system text-white text-lg font-semibold rounded-xl py-5 shadow-sm active:scale-[0.99] transition-transform"
-      @click="router.push('/setup')"
-    >
+    <button class="btn-primary w-full py-5 text-lg" @click="router.push('/setup')">
       + Start a New Match
     </button>
 
-    <button
-      class="w-full bg-card text-system border border-system/20 text-lg font-semibold rounded-xl py-5 shadow-sm active:scale-[0.99] transition-transform"
-      @click="router.push('/history')"
-    >
+    <button class="btn-secondary w-full py-5 text-lg" @click="router.push('/history')">
       View Match History
     </button>
   </div>

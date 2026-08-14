@@ -180,13 +180,13 @@ body {
 :root[data-theme='frosted'] input,
 :root[data-theme='frosted'] select,
 :root[data-theme='frosted'] textarea {
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.1);
   color: #eef0f5;
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.26);
 }
 :root[data-theme='frosted'] input::placeholder,
 :root[data-theme='frosted'] textarea::placeholder {
-  color: rgba(238, 240, 245, 0.5);
+  color: rgba(238, 240, 245, 0.55);
 }
 /* Native option popups render on a light OS surface — keep their text dark. */
 :root[data-theme='frosted'] option {
@@ -207,6 +207,104 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: none; /* not the .bg-system accent glow */
   color: #fff;
+}
+
+/* ==========================================================================
+   BUTTON SYSTEM
+   Shared control classes for the utility screens (Home / Setup / History).
+   Defaults below are the classic (light) look; the frosted overrides that
+   follow fix the readability issues in that theme (invisible borders, dim
+   placeholders, toggles/chips that didn't read as pickable, a disabled
+   button that looked broken instead of inert).
+   ========================================================================== */
+.btn-primary {
+  @apply bg-system text-white font-bold rounded-xl shadow-sm transition-transform active:scale-[0.98];
+}
+.btn-primary:disabled {
+  @apply cursor-not-allowed opacity-40 active:scale-100;
+}
+.btn-secondary {
+  @apply bg-card text-system font-semibold rounded-xl border border-system/30 transition-transform active:scale-[0.98];
+}
+.toggle,
+.chip {
+  @apply cursor-pointer rounded-lg border bg-canvas text-center font-semibold text-slate-600 transition-colors;
+}
+.toggle.on,
+.chip.on {
+  @apply border-system bg-system text-white;
+}
+.hint {
+  @apply text-center text-xs text-slate-400;
+}
+.badge-done {
+  @apply rounded-full bg-system px-2 py-1 text-xs font-bold text-white;
+}
+.badge-upcoming {
+  @apply rounded-full bg-slate-200 px-2 py-1 text-xs font-bold text-slate-600;
+}
+.list-card {
+  @apply flex w-full items-center gap-3 rounded-xl bg-card p-4 text-left shadow-sm transition-transform active:scale-[0.99];
+}
+.list-card .chev {
+  @apply ml-auto shrink-0 text-xl text-slate-300;
+}
+
+:root[data-theme='frosted'] .btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+:root[data-theme='frosted'] .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+:root[data-theme='frosted'] .btn-primary:disabled {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.32);
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+:root[data-theme='frosted'] .toggle,
+:root[data-theme='frosted'] .chip {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #eef0f5;
+}
+:root[data-theme='frosted'] .toggle.on,
+:root[data-theme='frosted'] .chip.on {
+  background: linear-gradient(160deg, #9b6cff, #7c3aed);
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.42);
+  color: #fff;
+}
+:root[data-theme='frosted'] .hint {
+  color: rgba(255, 255, 255, 0.55);
+}
+:root[data-theme='frosted'] .badge-done {
+  background: rgba(110, 231, 168, 0.16);
+  border: 1px solid rgba(110, 231, 168, 0.4);
+  color: #a7f3c0;
+  box-shadow: none;
+}
+:root[data-theme='frosted'] .badge-upcoming {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #eef0f5;
+}
+:root[data-theme='frosted'] .list-card:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+:root[data-theme='frosted'] .list-card .chev {
+  color: rgba(255, 255, 255, 0.5);
+}
+:root[data-theme='frosted'] .hero-glass {
+  background: linear-gradient(150deg, rgba(255, 150, 175, 0.24), rgba(150, 95, 240, 0.2));
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 10px 34px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 /* --- Frosted console: dedicated panel + control classes --- */
