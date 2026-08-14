@@ -2,7 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/client'
-import type { MatchListItem, MatchStatus } from '../types'
+import LiveBadge from '../components/LiveBadge.vue'
+import type { MatchListItem } from '../types'
 
 const router = useRouter()
 const matches = ref<MatchListItem[]>([])
@@ -13,8 +14,8 @@ onMounted(async () => {
   loading.value = false
 })
 
-const STATUS_STYLE: Record<MatchStatus, string> = {
-  LIVE: 'bg-boundary text-white',
+// Non-live statuses use calm neutral pills; LIVE uses the shared LiveBadge.
+const STATUS_STYLE: Record<'COMPLETED' | 'UPCOMING', string> = {
   COMPLETED: 'bg-system text-white',
   UPCOMING: 'bg-slate-200 text-slate-600',
 }
@@ -43,7 +44,12 @@ function open(m: MatchListItem) {
     >
       <div class="flex items-center justify-between">
         <span class="font-semibold text-slate-700">{{ m.team_one }} vs {{ m.team_two }}</span>
-        <span class="text-xs font-bold px-2 py-1 rounded-full" :class="STATUS_STYLE[m.status]">
+        <LiveBadge v-if="m.status === 'LIVE'" class="shrink-0" />
+        <span
+          v-else
+          class="text-xs font-bold px-2 py-1 rounded-full"
+          :class="STATUS_STYLE[m.status]"
+        >
           {{ m.status }}
         </span>
       </div>

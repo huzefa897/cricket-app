@@ -73,7 +73,7 @@ function confirm() {
 
 <template>
   <div class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-20 p-3">
-    <div class="bg-card w-full max-w-md rounded-2xl shadow-lg p-5 space-y-4">
+    <div class="modal-card bg-card w-full max-w-md rounded-2xl shadow-lg p-5 space-y-4">
       <div class="flex items-center">
         <h3 class="text-lg font-bold text-wicket">Wicket! — Step {{ step }}/5</h3>
         <button class="ml-auto text-slate-400" @click="emit('cancel')">Cancel</button>
