@@ -148,6 +148,35 @@ def change_bowler(innings: Innings, *, bowler_id: int) -> Innings:
 
 
 # --------------------------------------------------------------------------- #
+# Undo a ball
+# --------------------------------------------------------------------------- #
+@transaction.atomic
+def undo_last_ball(innings: Innings) -> Innings:
+    innings = Innings.objects.select_for_update().get(pk=innings.pk)
+    last = innings.balls.order_by("id").last()
+    if last is None:
+        raise ValidationError("No ball to undo.")
+
+    prev = last.pre_state
+    innings.total_runs = prev["total_runs"]
+    innings.total_wickets = prev["total_wickets"]
+    innings.legal_balls_bowled = prev["legal_balls_bowled"]
+    innings.current_striker_id = prev["striker_id"]
+    innings.current_non_striker_id = prev["non_striker_id"]
+    innings.current_bowler_id = prev["bowler_id"]
+    innings.is_completed = prev["is_completed"]
+
+    match = innings.match
+    if match.status != prev["match_status"]:
+        match.status = prev["match_status"]
+        match.save(update_fields=["status"])
+
+    last.delete()
+    innings.save()
+    return innings
+
+
+# --------------------------------------------------------------------------- #
 # Recording a delivery
 # --------------------------------------------------------------------------- #
 @transaction.atomic
@@ -165,6 +194,16 @@ def record_ball(
 ) -> BallEvent:
     """Apply a single delivery: persist it and mutate the innings state."""
     innings = Innings.objects.select_for_update().get(pk=innings.pk)
+    snapshot = {
+        "total_runs": innings.total_runs,
+        "total_wickets": innings.total_wickets,
+        "legal_balls_bowled": innings.legal_balls_bowled,
+        "striker_id": innings.current_striker_id,
+        "non_striker_id": innings.current_non_striker_id,
+        "bowler_id": innings.current_bowler_id,
+        "is_completed": innings.is_completed,
+        "match_status": innings.match.status,
+    }
     _validate_ball(innings, extra_type, runs_scored_bat)
 
     is_legal = extra_type not in (ExtraType.WIDE, ExtraType.NO_BALL)
@@ -184,6 +223,7 @@ def record_ball(
         is_wicket=is_wicket,
         wicket_type=wicket_type,
         player_dismissed_id=player_dismissed_id,
+        pre_state=snapshot,
     )
 
     # 1) Score + counters
