@@ -376,9 +376,146 @@ class TestFinishMatch:
 
 
 # --------------------------------------------------------------------------- #
+# Undo last ball
+# --------------------------------------------------------------------------- #
+class TestUndoLastBall:
+    def test_reverts_a_run_and_rewinds_strike(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)
+        opener = inns.current_striker_id
+        services.record_ball(inns, runs_scored_bat=1)  # odd run rotates strike
+        inns.refresh_from_db()
+        assert inns.total_runs == 1
+        assert inns.current_striker_id != opener
+
+        services.undo_last_ball(inns)
+        inns.refresh_from_db()
+        assert inns.total_runs == 0
+        assert inns.legal_balls_bowled == 0
+        assert inns.current_striker_id == opener  # strike rewound
+        assert inns.balls.count() == 0  # the event is gone
+
+    def test_reverts_a_wicket_and_clears_dismissal(self, opened_match):
+        match, meta = opened_match
+        inns = active_innings(match)
+        striker = inns.current_striker_id
+        services.record_ball(
+            inns,
+            is_wicket=True,
+            wicket_type="BOWLED",
+            player_dismissed_id=striker,
+            incoming_batsman_id=meta["one"][2],
+            new_striker_id=meta["one"][2],
+        )
+        inns.refresh_from_db()
+        assert inns.total_wickets == 1
+
+        services.undo_last_ball(inns)
+        inns.refresh_from_db()
+        assert inns.total_wickets == 0
+        assert inns.current_striker_id == striker  # original batter back on strike
+        # Derived stats fix themselves once the event is deleted.
+        state = services.build_live_state(match)
+        assert state["innings"]["dismissed_player_ids"] == []
+
+    def test_uncompletes_the_innings(self, make_match):
+        # 2 players/side => all out at 1 wicket completes the innings.
+        match, meta = make_match(players_per_side=2)
+        inns = match.innings.get(innings_number=1)
+        services.set_openers(
+            inns,
+            striker_id=meta["one"][0],
+            non_striker_id=meta["one"][1],
+            bowler_id=meta["two"][0],
+        )
+        services.record_ball(
+            inns, is_wicket=True, wicket_type="BOWLED", player_dismissed_id=meta["one"][0]
+        )
+        inns.refresh_from_db()
+        assert inns.is_completed is True
+
+        services.undo_last_ball(inns)
+        inns.refresh_from_db()
+        assert inns.is_completed is False
+        assert inns.total_wickets == 0
+
+    def test_uncompletes_the_match(self, opened_match):
+        match, meta = opened_match
+        services.record_ball(active_innings(match), runs_scored_bat=4)  # inns1 = 4, target 5
+        # Bowl out innings 1. record_ball clears the bowler at each over end, so
+        # re-assign one before every over — alternating, since the same bowler
+        # can't bowl two overs in a row.
+        bowlers = [meta["two"][0], meta["two"][1]]
+        over = 0
+        while True:
+            i = active_innings(match)
+            if i is None:
+                break
+            if i.current_bowler_id is None:
+                over += 1
+                services.change_bowler(i, bowler_id=bowlers[over % 2])
+            services.record_ball(i, runs_scored_bat=0)
+        services.transition_innings(
+            match,
+            striker_id=meta["two"][0],
+            non_striker_id=meta["two"][1],
+            bowler_id=meta["one"][0],
+        )
+        inns2 = active_innings(match)
+        services.record_ball(inns2, runs_scored_bat=6)  # 6 >= target -> match completed
+        match.refresh_from_db()
+        assert match.status == MatchStatus.COMPLETED
+
+        services.undo_last_ball(inns2)
+        match.refresh_from_db()
+        inns2.refresh_from_db()
+        assert match.status == MatchStatus.LIVE  # un-completed
+        assert inns2.is_completed is False
+        assert inns2.total_runs == 0
+
+    def test_raises_when_no_balls_to_undo(self, opened_match):
+        match, _ = opened_match
+        inns = active_innings(match)
+        with pytest.raises(ValidationError):
+            services.undo_last_ball(inns)
+
+    def test_raises_on_ball_without_snapshot(self, opened_match):
+        # Balls logged before the pre_state feature carry an empty snapshot
+        # (the field default). Undo must degrade to a clean ValidationError,
+        # not a raw KeyError. See regression: KeyError 'total_runs'.
+        match, _ = opened_match
+        inns = active_innings(match)
+        services.record_ball(inns, runs_scored_bat=1)
+        legacy = inns.balls.order_by("id").last()
+        legacy.pre_state = {}
+        legacy.save(update_fields=["pre_state"])
+
+        with pytest.raises(ValidationError):
+            services.undo_last_ball(inns)
+        # The ball is left intact — nothing was half-undone.
+        inns.refresh_from_db()
+        assert inns.balls.count() == 1
+        assert inns.total_runs == 1
+
+
+# --------------------------------------------------------------------------- #
 # Live state derivations
 # --------------------------------------------------------------------------- #
 class TestLiveState:
+    def test_last_ball_symbol_tracks_most_recent_delivery(self, opened_match):
+        match, _ = opened_match
+        # None before any ball.
+        assert services.build_live_state(match)["innings"]["last_ball"] is None
+        services.record_ball(active_innings(match), runs_scored_bat=4)
+        assert services.build_live_state(match)["innings"]["last_ball"] == "4"
+        # Survives an over boundary (this_over resets, last_ball does not).
+        # 4 + five dots = 6 legal balls, all still the opener's over.
+        for _ in range(5):
+            services.record_ball(active_innings(match), runs_scored_bat=0)
+        state = services.build_live_state(match)
+        assert state["innings"]["this_over"] == []  # new over, ticker cleared
+        assert state["innings"]["last_ball"] == "0"  # last delivery still known
+
     def test_crr_computed(self, opened_match):
         match, _ = opened_match
         services.record_ball(active_innings(match), runs_scored_bat=6)

@@ -179,3 +179,19 @@ class TestMatchApi:
         )
         live = client.get(f"/api/matches/{match['id']}/live/").json()
         assert a[0]["id"] in live["innings"]["dismissed_player_ids"]
+
+    def test_undo_reverts_last_ball(self, client):
+        match = create_match(client)
+        set_openers(client, match)
+        mid = match["id"]
+        client.post(f"/api/matches/{mid}/balls/", {"runs_scored_bat": 4}, format="json")
+
+        res = client.post(f"/api/matches/{mid}/undo/")
+        assert res.status_code == 200, res.content
+        assert res.json()["innings"]["total_runs"] == 0
+
+    def test_undo_with_no_balls_rejected(self, client):
+        match = create_match(client)
+        set_openers(client, match)
+        res = client.post(f"/api/matches/{match['id']}/undo/")
+        assert res.status_code == 400

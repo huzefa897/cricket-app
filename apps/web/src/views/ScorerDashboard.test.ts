@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { DOMWrapper, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { api } from '../api/client'
 import type { LiveState, MatchDetail } from '../types'
@@ -18,6 +18,7 @@ vi.mock('../api/client', () => ({
     recordBall: vi.fn(),
     transitionInnings: vi.fn(),
     finishMatch: vi.fn(),
+    undoLastBall: vi.fn(),
   },
 }))
 
@@ -44,6 +45,7 @@ function liveFixture(overrides: Partial<LiveState['innings'] & object> = {}): Li
       non_striker: { id: 2, name: 'A2', runs: 0, balls: 0 },
       bowler: { id: 5, name: 'B1', overs: '0.0', runs_conceded: 0, wickets: 0 },
       this_over: [],
+      last_ball: null,
       dismissed_player_ids: [],
       ...overrides,
     },
@@ -89,6 +91,20 @@ function findBtn(wrapper: ReturnType<typeof mount>, text: string) {
   return btn
 }
 
+// Reka's Dialog teleports its content to <body>, outside the wrapper subtree.
+// Wrap those nodes in a DOMWrapper so .setValue()/.trigger() behave as usual.
+function bodySelect() {
+  const el = document.body.querySelector('select')
+  return el ? new DOMWrapper(el) : null
+}
+function bodyBtn(text: string) {
+  const el = [...document.body.querySelectorAll('button')].find((b) =>
+    b.textContent?.includes(text),
+  )
+  if (!el) throw new Error(`No body button matching "${text}"`)
+  return new DOMWrapper(el)
+}
+
 async function mountDashboard() {
   const wrapper = mount(ScorerDashboard, { props: { id: 1 } })
   await flushPromises() // resolve store.open() -> getMatch + getLive
@@ -106,6 +122,8 @@ describe('ScorerDashboard integration', () => {
   afterEach(() => {
     // stop the store's polling interval so it doesn't leak across tests
     push.mockClear()
+    // Remove any teleported Reka dialog left in <body> between tests.
+    document.body.innerHTML = ''
   })
 
   it('renders the live score and active players once loaded', async () => {
@@ -130,17 +148,17 @@ describe('ScorerDashboard integration', () => {
     mockedApi.recordBall.mockResolvedValue(liveFixture({ total_wickets: 1 }))
     const wrapper = await mountDashboard()
 
-    // open the wizard
+    // open the wizard (the pad button stays in the wrapper subtree)
     await findBtn(wrapper, 'Wicket!').trigger('click')
     await flushPromises()
 
-    // 5-step flow
-    await findBtn(wrapper, 'BOWLED').trigger('click')
-    await findBtn(wrapper, 'A1').trigger('click') // striker is out
-    await wrapper.find('select').setValue(3) // incoming batsman
-    await findBtn(wrapper, 'Next').trigger('click')
-    await findBtn(wrapper, 'Incoming').trigger('click') // incoming takes strike
-    await findBtn(wrapper, 'Confirm').trigger('click')
+    // 5-step flow — the wizard is a Reka Dialog, teleported to <body>.
+    await bodyBtn('BOWLED').trigger('click')
+    await bodyBtn('A1').trigger('click') // striker is out
+    await bodySelect()!.setValue(3) // incoming batsman
+    await bodyBtn('Next').trigger('click')
+    await bodyBtn('Incoming').trigger('click') // incoming takes strike
+    await bodyBtn('Confirm').trigger('click')
     await flushPromises()
 
     expect(mockedApi.recordBall).toHaveBeenCalledTimes(1)
@@ -158,20 +176,20 @@ describe('ScorerDashboard integration', () => {
     mockedApi.getLive.mockResolvedValue(liveFixture({ legal_balls_bowled: 6, bowler: null }))
     // Picking a bowler resolves to a state that has one again → prompt clears.
     mockedApi.changeBowler.mockResolvedValue(liveFixture({ legal_balls_bowled: 6 }))
-    const wrapper = await mountDashboard()
+    await mountDashboard()
 
-    // Scoring matrix is hidden, the bowler prompt is shown.
-    expect(wrapper.find('select').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Select Bowler')
+    // Scoring matrix is hidden, the bowler prompt (teleported) is shown.
+    expect(bodySelect()).not.toBeNull()
+    expect(document.body.textContent).toContain('Select Bowler')
 
     // Pick B2 and confirm → store.changeBowler → api.changeBowler.
-    await wrapper.find('select').setValue(6)
-    await findBtn(wrapper, 'Confirm').trigger('click')
+    await bodySelect()!.setValue(6)
+    await bodyBtn('Confirm').trigger('click')
     await flushPromises()
 
     expect(mockedApi.changeBowler).toHaveBeenCalledWith(1, 6)
     // The prompt is gone now that a bowler is set (the deadlock is fixed).
-    expect(wrapper.find('select').exists()).toBe(false)
+    expect(bodySelect()).toBeNull()
   })
 
   it('shows a toast above the modal when the bowler pick is rejected', async () => {
@@ -182,15 +200,34 @@ describe('ScorerDashboard integration', () => {
     )
     const wrapper = await mountDashboard()
 
-    await wrapper.find('select').setValue(5)
-    await findBtn(wrapper, 'Confirm').trigger('click')
+    await bodySelect()!.setValue(5)
+    await bodyBtn('Confirm').trigger('click')
     await flushPromises()
 
     // The toast (role="alert") carries the message and the modal stays open.
     const toast = wrapper.find('[role="alert"]')
     expect(toast.exists()).toBe(true)
     expect(toast.text()).toContain("last bowler and next bowler can't be the same")
-    expect(wrapper.find('select').exists()).toBe(true)
+    expect(bodySelect()).not.toBeNull()
+  })
+
+  it('disables Undo when no ball has been bowled yet', async () => {
+    // Default fixture: legal_balls_bowled = 0 => nothing to undo.
+    const wrapper = await mountDashboard()
+    expect(findBtn(wrapper, 'Undo').attributes('disabled')).toBeDefined()
+  })
+
+  it('undoes the last ball once one has been bowled', async () => {
+    mockedApi.getLive.mockResolvedValue(liveFixture({ total_runs: 4, legal_balls_bowled: 1 }))
+    mockedApi.undoLastBall.mockResolvedValue(liveFixture({ total_runs: 0, legal_balls_bowled: 0 }))
+    const wrapper = await mountDashboard()
+
+    const undo = findBtn(wrapper, 'Undo')
+    expect(undo.attributes('disabled')).toBeUndefined() // enabled now
+    await undo.trigger('click')
+    await flushPromises()
+
+    expect(mockedApi.undoLastBall).toHaveBeenCalledWith(1)
   })
 
   it('finishing the match calls the finish endpoint and locks scoring', async () => {

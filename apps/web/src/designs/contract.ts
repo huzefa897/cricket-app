@@ -9,6 +9,7 @@ export interface DashboardDesignProps {
   innings: LiveInnings | null
   busy: boolean
   needsBowler: boolean
+  noUndo: boolean
   matchCompleted: boolean
 }
 
@@ -16,6 +17,7 @@ export interface DashboardDesignEmits {
   runs: [n: number]
   extras: [kind: ExtrasKind]
   wicket: []
+  undo: []
   finish: []
   scorecard: []
 }

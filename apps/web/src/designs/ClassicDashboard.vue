@@ -107,6 +107,14 @@ const emit = defineEmits<DashboardDesignEmits>()
         </button>
       </div>
       <button
+        class="w-full bg-undo text-slate-900 text-xl font-bold rounded-xl py-6 active:scale-95 disabled:opacity-40"
+        :disabled="noUndo || busy"
+        @click="emit('undo')"
+      >
+        Undo Ball
+      </button>
+
+      <button
         class="w-full bg-wicket text-white text-xl font-bold rounded-xl py-6 active:scale-95"
         @click="emit('wicket')"
       >

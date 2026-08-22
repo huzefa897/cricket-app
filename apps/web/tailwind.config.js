@@ -15,6 +15,7 @@ export default {
         bye: '#64748B', // Byes / leg-byes
         wicket: '#A34838', // Wickets & dismissals
         system: '#4A6B5D', // Headers, active tabs, primary actions
+        undo : '#FFDF82'
       },
     },
   },

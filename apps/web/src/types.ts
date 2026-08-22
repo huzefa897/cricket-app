@@ -91,6 +91,7 @@ export interface LiveInnings {
   non_striker: BatterStat | null
   bowler: BowlerStat | null
   this_over: string[]
+  last_ball: string | null
   dismissed_player_ids: number[]
 }
 

@@ -27,6 +27,22 @@ function fig(): string {
   const b = inns.value?.bowler
   return b ? `${b.overs}–${b.runs_conceded}–${b.wickets}` : '0.0–0–0'
 }
+
+// Preview chip for the Undo button: the last delivery, colour-coded to match
+// the scoring palette. Derived from the backend `last_ball` symbol so it stays
+// correct across over boundaries (unlike this_over, which resets each over).
+const lastBall = computed<{ label: string; cls: string } | null>(() => {
+  const s = inns.value?.last_ball
+  if (!s) return null
+  if (s === 'W') return { label: 'W', cls: 'bg-wicket' }
+  if (s.endsWith('wd')) return { label: 'WD', cls: 'bg-wide' }
+  if (s.endsWith('nb')) return { label: 'NB', cls: 'bg-noball' }
+  if (s.endsWith('lb')) return { label: 'LB', cls: 'bg-bye' }
+  if (s.endsWith('b')) return { label: 'B', cls: 'bg-bye' }
+  const n = Number(s)
+  if (n === 4 || n === 6) return { label: s, cls: 'bg-boundary' }
+  return { label: s === '0' ? '•' : s, cls: 'bg-runs' }
+})
 </script>
 
 <template>
@@ -107,6 +123,40 @@ function fig(): string {
             >{{ s }}</span
           >
           <span v-if="!inns.this_over.length" class="text-xs text-white/45">— new over —</span>
+
+          <!-- Undo: neutral glass so it reads as a correction, not a scoring
+               or destructive action. The chip previews the ball that vanishes. -->
+          <button
+            class="ml-auto inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-white border border-white/30 bg-white/10 backdrop-blur transition active:scale-95 enabled:hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:border-white/10"
+            :disabled="noUndo || busy"
+            @click="emit('undo')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="17"
+              height="17"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M9 6 4 11l5 5" />
+              <path d="M4 11h11a5 5 0 0 1 5 5v1" />
+            </svg>
+            <span class="text-left leading-none">
+              Undo
+              <span class="block text-[10px] font-semibold text-white/50 mt-0.5">
+                {{ noUndo ? '—' : 'last ball' }}
+              </span>
+            </span>
+            <span
+              v-if="lastBall && !noUndo"
+              class="min-w-[26px] h-[26px] px-1.5 rounded-md grid place-items-center font-mono text-xs font-bold text-white num"
+              :class="lastBall.cls"
+              >{{ lastBall.label }}</span
+            >
+          </button>
         </div>
       </div>
     </div>

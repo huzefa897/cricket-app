@@ -146,6 +146,7 @@ class BallEvent(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+    pre_state = models.JSONField(default=dict)
 
     class Meta:
         ordering = ["id"]
