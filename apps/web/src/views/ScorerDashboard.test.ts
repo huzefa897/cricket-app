@@ -45,6 +45,7 @@ function liveFixture(overrides: Partial<LiveState['innings'] & object> = {}): Li
       non_striker: { id: 2, name: 'A2', runs: 0, balls: 0 },
       bowler: { id: 5, name: 'B1', overs: '0.0', runs_conceded: 0, wickets: 0 },
       this_over: [],
+      last_ball: null,
       dismissed_player_ids: [],
       ...overrides,
     },
@@ -197,7 +198,7 @@ describe('ScorerDashboard integration', () => {
   it('disables Undo when no ball has been bowled yet', async () => {
     // Default fixture: legal_balls_bowled = 0 => nothing to undo.
     const wrapper = await mountDashboard()
-    expect(findBtn(wrapper, 'Undo Ball').attributes('disabled')).toBeDefined()
+    expect(findBtn(wrapper, 'Undo').attributes('disabled')).toBeDefined()
   })
 
   it('undoes the last ball once one has been bowled', async () => {
@@ -205,7 +206,7 @@ describe('ScorerDashboard integration', () => {
     mockedApi.undoLastBall.mockResolvedValue(liveFixture({ total_runs: 0, legal_balls_bowled: 0 }))
     const wrapper = await mountDashboard()
 
-    const undo = findBtn(wrapper, 'Undo Ball')
+    const undo = findBtn(wrapper, 'Undo')
     expect(undo.attributes('disabled')).toBeUndefined() // enabled now
     await undo.trigger('click')
     await flushPromises()

@@ -24,6 +24,7 @@ function live(overrides: Partial<NonNullable<LiveState['innings']>> = {}): LiveS
       non_striker: null,
       bowler: null,
       this_over: [],
+      last_ball: null,
       dismissed_player_ids: [],
       ...overrides,
     },

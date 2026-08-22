@@ -453,6 +453,9 @@ def build_live_state(match: Match) -> dict:
             "non_striker": _batter_stats(innings, innings.current_non_striker),
             "bowler": _bowler_stats(innings, innings.current_bowler),
             "this_over": _this_over(innings),
+            # Symbol of the most recent delivery (any over) — powers the Undo
+            # button's preview chip. None when no ball has been bowled yet.
+            "last_ball": _last_ball_symbol(innings),
             # Lets a resumed scorer rebuild the out-players list correctly.
             "dismissed_player_ids": list(
                 innings.balls.filter(is_wicket=True, player_dismissed__isnull=False).values_list(
@@ -502,6 +505,12 @@ def _this_over(innings: Innings) -> list[str]:
     for ball in innings.balls.filter(over_number=current_over):
         symbols.append(_ball_symbol(ball))
     return symbols
+
+
+def _last_ball_symbol(innings: Innings) -> str | None:
+    """Symbol of the most recent delivery across the whole innings, or None."""
+    last = innings.balls.order_by("id").last()
+    return _ball_symbol(last) if last else None
 
 
 def _ball_symbol(ball: BallEvent) -> str:

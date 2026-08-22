@@ -502,6 +502,20 @@ class TestUndoLastBall:
 # Live state derivations
 # --------------------------------------------------------------------------- #
 class TestLiveState:
+    def test_last_ball_symbol_tracks_most_recent_delivery(self, opened_match):
+        match, _ = opened_match
+        # None before any ball.
+        assert services.build_live_state(match)["innings"]["last_ball"] is None
+        services.record_ball(active_innings(match), runs_scored_bat=4)
+        assert services.build_live_state(match)["innings"]["last_ball"] == "4"
+        # Survives an over boundary (this_over resets, last_ball does not).
+        # 4 + five dots = 6 legal balls, all still the opener's over.
+        for _ in range(5):
+            services.record_ball(active_innings(match), runs_scored_bat=0)
+        state = services.build_live_state(match)
+        assert state["innings"]["this_over"] == []  # new over, ticker cleared
+        assert state["innings"]["last_ball"] == "0"  # last delivery still known
+
     def test_crr_computed(self, opened_match):
         match, _ = opened_match
         services.record_ball(active_innings(match), runs_scored_bat=6)

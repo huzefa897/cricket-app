@@ -40,6 +40,7 @@ function liveFixture(overrides: Partial<LiveState['innings'] & object> = {}): Li
       non_striker: { id: 2, name: 'A2', runs: 0, balls: 0 },
       bowler: { id: 5, name: 'B1', overs: '0.0', runs_conceded: 0, wickets: 0 },
       this_over: [],
+      last_ball: null,
       dismissed_player_ids: [],
       ...overrides,
     },
