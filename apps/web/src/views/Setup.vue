@@ -48,6 +48,14 @@ const canStart = computed(
     teams[1].players.length >= 2,
 )
 
+const startHint = computed(() => {
+  if (!teams[0].name.trim() || !teams[1].name.trim()) return 'Add both team names to start'
+  if (teams[0].players.length < 2 || teams[1].players.length < 2) {
+    return 'Each team needs at least 2 players'
+  }
+  return ''
+})
+
 async function startMatch() {
   if (!canStart.value || submitting.value) return
   submitting.value = true
@@ -100,12 +108,7 @@ async function startMatch() {
           class="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-system/40 outline-none"
           @keyup.enter="addPlayer(team)"
         />
-        <button
-          class="bg-system text-white px-4 rounded-lg font-semibold active:scale-95"
-          @click="addPlayer(team)"
-        >
-          Add
-        </button>
+        <button class="btn-primary px-4" @click="addPlayer(team)">Add</button>
       </div>
 
       <div class="flex flex-wrap gap-2">
@@ -129,10 +132,8 @@ async function startMatch() {
         <button
           v-for="o in oversPresets"
           :key="o"
-          class="px-4 py-2 rounded-lg font-semibold border"
-          :class="
-            totalOvers === o ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'
-          "
+          class="chip px-4 py-2"
+          :class="{ on: totalOvers === o }"
           @click="totalOvers = o"
         >
           {{ o }}
@@ -153,12 +154,8 @@ async function startMatch() {
         <button
           v-for="ti in tossOptions"
           :key="ti"
-          class="px-4 py-3 rounded-lg font-semibold border truncate"
-          :class="
-            tossWinnerIndex === ti
-              ? 'bg-system text-white border-system'
-              : 'bg-canvas text-slate-600'
-          "
+          class="toggle truncate px-4 py-3"
+          :class="{ on: tossWinnerIndex === ti }"
           @click="tossWinnerIndex = ti"
         >
           {{ teams[ti - 1].name || `Team ${ti}` }}
@@ -169,10 +166,8 @@ async function startMatch() {
         <button
           v-for="d in decisionOptions"
           :key="d"
-          class="px-4 py-3 rounded-lg font-semibold border"
-          :class="
-            tossDecision === d ? 'bg-system text-white border-system' : 'bg-canvas text-slate-600'
-          "
+          class="toggle px-4 py-3"
+          :class="{ on: tossDecision === d }"
           @click="tossDecision = d"
         >
           {{ d === 'BAT' ? 'Bat first' : 'Bowl first' }}
@@ -183,11 +178,12 @@ async function startMatch() {
     <p v-if="error" class="text-wicket text-sm">{{ error }}</p>
 
     <button
-      class="w-full bg-system text-white text-lg font-bold rounded-xl py-5 shadow-sm disabled:opacity-40 active:scale-[0.99] transition-transform"
+      class="btn-primary w-full py-5 text-lg"
       :disabled="!canStart || submitting"
       @click="startMatch"
     >
       {{ submitting ? 'Starting…' : 'Start Match & Open Scorer' }}
     </button>
+    <p v-if="startHint && !submitting" class="hint">{{ startHint }}</p>
   </div>
 </template>

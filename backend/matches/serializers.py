@@ -7,6 +7,7 @@ from .models import (
     ExtraType,
     Innings,
     Match,
+    MatchStatus,
     Player,
     Team,
     TossDecision,
@@ -111,6 +112,9 @@ class InningsSerializer(serializers.ModelSerializer):
 class MatchListSerializer(serializers.ModelSerializer):
     team_one = serializers.CharField(source="team_one.name", read_only=True)
     team_two = serializers.CharField(source="team_two.name", read_only=True)
+    # Compact current-score summary; null unless the match is LIVE. Powers the
+    # "live now" list on the Home screen.
+    live_summary = serializers.SerializerMethodField()
 
     class Meta:
         model = Match
@@ -121,7 +125,24 @@ class MatchListSerializer(serializers.ModelSerializer):
             "total_overs",
             "status",
             "created_at",
+            "live_summary",
         ]
+
+    def get_live_summary(self, obj: Match) -> dict | None:
+        if obj.status != MatchStatus.LIVE:
+            return None
+        # The over in progress; fall back to the latest if all are marked done.
+        innings = [i for i in obj.innings.all() if not i.is_completed]
+        inns = innings[-1] if innings else (list(obj.innings.all()) or [None])[-1]
+        if inns is None:
+            return None
+        return {
+            "innings_number": inns.innings_number,
+            "batting_team": inns.batting_team.name,
+            "total_runs": inns.total_runs,
+            "total_wickets": inns.total_wickets,
+            "overs": inns.overs_display,
+        }
 
 
 class MatchDetailSerializer(serializers.ModelSerializer):

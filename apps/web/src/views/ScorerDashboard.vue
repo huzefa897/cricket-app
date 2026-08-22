@@ -3,13 +3,16 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useMatchStore } from '../stores/match'
+import { usePreferencesStore } from '../stores/preferences'
+import { themeById } from '../designs/registry'
 import type { BallPayload, OpenersPayload } from '../types'
 import type { ExtrasKind } from '../components/ExtrasModal.vue'
-import ScoreHeader from '../components/ScoreHeader.vue'
 import OpenersModal from '../components/OpenersModal.vue'
 import WicketModal from '../components/WicketModal.vue'
 import ExtrasModal from '../components/ExtrasModal.vue'
 import BowlerModal from '../components/BowlerModal.vue'
+import SettingsModal from '../components/SettingsModal.vue'
+import Toast from '../components/Toast.vue'
 
 const props = defineProps<{ id: string | number }>()
 const router = useRouter()
@@ -24,24 +27,26 @@ const {
   isLastWicket,
 } = storeToRefs(store)
 
+// The active theme ships its own dashboard (persisted in localStorage).
+const prefs = usePreferencesStore()
+const activeDashboard = computed(() => themeById(prefs.theme).dashboard)
+
 const busy = ref(false)
 const actionError = ref<string | null>(null)
 const extrasKind = ref<ExtrasKind | null>(null)
 const showWicket = ref(false)
 const showFinishConfirm = ref(false)
+const showSettings = ref(false)
 
 onMounted(() => store.open(props.id))
 onUnmounted(() => store.stopPolling())
 
 // --- State flags ---
 const needsOpeners = computed(() => !!inns.value && !inns.value.striker && !inns.value.is_completed)
+// After each over the backend clears the bowler; the scorer must pick who
+// bowls next. Cleared the instant changeBowler returns (bowler becomes set).
 const needsBowler = computed(
-  () =>
-    !!inns.value &&
-    !!inns.value.striker &&
-    !inns.value.is_completed &&
-    inns.value.legal_balls_bowled > 0 &&
-    inns.value.legal_balls_bowled % 6 === 0,
+  () => !!inns.value && !!inns.value.striker && !inns.value.is_completed && !inns.value.bowler,
 )
 const matchCompleted = computed(() => live.value?.status === 'COMPLETED')
 const needsTransition = computed(
@@ -94,187 +99,137 @@ function undoLastBall() {
 
 <template>
   <div v-if="live" class="space-y-4 pb-24">
-    <ScoreHeader :live="live" />
-
-    <!-- Active players -->
-    <div
-      v-if="inns && inns.striker"
-      class="bg-card rounded-xl shadow-sm p-4 grid grid-cols-3 gap-2 text-sm"
-    >
-      <div>
-        <p class="text-slate-400">Striker</p>
-        <p class="font-semibold">★ {{ inns.striker.name }}</p>
-        <p class="text-slate-500">{{ inns.striker.runs }} ({{ inns.striker.balls }})</p>
-      </div>
-      <div>
-        <p class="text-slate-400">Non-striker</p>
-        <p class="font-semibold">{{ inns.non_striker?.name ?? '—' }}</p>
-        <p class="text-slate-500">
-          {{ inns.non_striker?.runs ?? 0 }} ({{ inns.non_striker?.balls ?? 0 }})
-        </p>
-      </div>
-      <div>
-        <p class="text-slate-400">Bowler</p>
-        <p class="font-semibold">{{ inns.bowler?.name ?? '—' }}</p>
-        <p class="text-slate-500">
-          {{ inns.bowler?.overs ?? '0.0' }}–{{ inns.bowler?.runs_conceded ?? 0 }}–{{
-            inns.bowler?.wickets ?? 0
-          }}
-        </p>
-      </div>
-      <div class="col-span-3 flex gap-1 flex-wrap pt-2 border-t">
-        <span class="text-slate-400 text-xs mr-1">This over:</span>
-        <span
-          v-for="(s, i) in inns.this_over"
-          :key="i"
-          class="text-xs font-bold bg-canvas border rounded px-1.5 py-0.5"
-          >{{ s }}</span
-        >
-        <span v-if="!inns.this_over.length" class="text-xs text-slate-300">—</span>
-      </div>
-    </div>
-
-    <p v-if="actionError" class="text-wicket text-sm">{{ actionError }}</p>
-
-    <!-- Match completed -->
-    <div v-if="matchCompleted" class="bg-card rounded-xl shadow-sm p-6 text-center space-y-3">
-      <p class="text-xl font-bold text-system">🏆 Match Completed</p>
+    <!-- Settings: switch dashboard design -->
+    <div class="flex justify-end -mb-2">
       <button
-        class="w-full bg-system text-white font-semibold rounded-xl py-4"
-        @click="router.push(`/match/${id}/live`)"
+        class="p-2 -mr-1 text-slate-400 active:scale-90"
+        aria-label="Settings"
+        @click="showSettings = true"
       >
-        View Final Scorecard
+        <svg
+          class="h-6 w-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M9.6 3.9c.09-.54.56-.94 1.11-.94h2.59c.55 0 1.02.4 1.11.94l.21 1.28c.06.37.31.69.65.87.32.2.72.26 1.07.12l1.22-.45c.52-.2 1.1 0 1.37.49l1.3 2.25c.27.47.16 1.08-.26 1.43l-1 .83c-.3.24-.44.61-.43.99v.26c-.01.38.13.75.43.99l1 .83c.42.35.53.96.26 1.43l-1.3 2.25c-.27.48-.85.68-1.37.49l-1.22-.46c-.35-.13-.75-.07-1.07.12-.34.19-.59.5-.65.87l-.21 1.28c-.09.54-.56.94-1.11.94h-2.59c-.55 0-1.02-.4-1.11-.94l-.21-1.28c-.06-.37-.31-.69-.65-.87-.32-.2-.72-.26-1.07-.12l-1.22.45c-.52.2-1.1 0-1.37-.49l-1.3-2.25a1.13 1.13 0 0 1 .26-1.43l1-.83c.3-.24.44-.61.43-.99v-.26c.01-.38-.13-.75-.43-.99l-1-.83a1.13 1.13 0 0 1-.26-1.43l1.3-2.25c.27-.48.85-.68 1.37-.49l1.22.46c.35.13.75.07 1.07-.12.34-.19.59-.5.65-.87l.21-1.28Z"
+          />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
       </button>
     </div>
 
-    <!-- Scoring matrix -->
-    <div v-else-if="inns && inns.striker && !inns.is_completed && !needsBowler" class="space-y-2">
-      <div class="grid grid-cols-4 gap-2">
-        <button
-          v-for="n in [0, 1, 2, 3]"
-          :key="n"
-          class="bg-runs text-white text-2xl font-bold rounded-xl py-6 active:scale-95 disabled:opacity-40"
-          :disabled="busy"
-          @click="runs(n)"
-        >
-          {{ n }}
-        </button>
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <button
-          v-for="n in [4, 6]"
-          :key="n"
-          class="bg-boundary text-white text-2xl font-bold rounded-xl py-6 active:scale-95 disabled:opacity-40"
-          :disabled="busy"
-          @click="runs(n)"
-        >
-          {{ n }}
-        </button>
-      </div>
-      <div class="grid grid-cols-3 gap-2">
-        <button
-          class="bg-wide text-white font-bold rounded-xl py-5 active:scale-95"
-          @click="extrasKind = 'WIDE'"
-        >
-          Wide
-        </button>
-        <button
-          class="bg-noball text-white font-bold rounded-xl py-5 active:scale-95"
-          @click="extrasKind = 'NO_BALL'"
-        >
-          No Ball
-        </button>
-        <button
-          class="bg-bye text-white font-bold rounded-xl py-5 active:scale-95"
-          @click="extrasKind = 'BYE_LEGBYE'"
-        >
-          Bye / LB
-        </button>
-      </div>
-      <button
-        class="w-full bg-undo text-slate-900 text-xl font-bold rounded-xl py-6 active:scale-95 disabled:opacity-40"
-        @click="undoLastBall()"
-        :disabled="noUndo || busy"
-      >
-        Undo Ball
-      </button>
-
-      <button
-        class="w-full bg-wicket text-white text-xl font-bold rounded-xl py-6 active:scale-95"
-        @click="showWicket = true"
-      >
-        Wicket!
-      </button>
-
-      <!-- Bottom control: end the match manually and lock scoring -->
-      <button
-        class="w-full mt-2 border-2 border-wicket text-wicket font-semibold rounded-xl py-3 active:scale-[0.99]"
-        @click="showFinishConfirm = true"
-      >
-        Finish Match
-      </button>
-    </div>
+    <!-- Active theme's dashboard (swappable via Settings) -->
+    <Transition name="fade" mode="out-in">
+      <component
+        :is="activeDashboard"
+        :key="prefs.theme"
+        :live="live"
+        :innings="inns"
+        :busy="busy"
+        :needs-bowler="needsBowler"
+        :no-undo="noUndo"
+        :match-completed="matchCompleted"
+        @runs="runs"
+        @extras="extrasKind = $event"
+        @wicket="showWicket = true"
+        @undo="undoLastBall"
+        @finish="showFinishConfirm = true"
+        @scorecard="router.push(`/match/${id}/live`)"
+      />
+    </Transition>
 
     <!-- Modals -->
-    <OpenersModal
-      v-if="needsOpeners"
-      :batting-players="battingPlayers"
-      :bowling-players="bowlingPlayers"
-      @confirm="submitOpeners"
-    />
+    <Transition name="modal">
+      <OpenersModal
+        v-if="needsOpeners"
+        :batting-players="battingPlayers"
+        :bowling-players="bowlingPlayers"
+        @confirm="submitOpeners"
+      />
+    </Transition>
 
-    <OpenersModal
-      v-if="needsTransition"
-      title="Innings Break — Set Openers for 2nd Innings"
-      :batting-players="bowlingPlayers"
-      :bowling-players="battingPlayers"
-      @confirm="submitTransition"
-    />
-    <BowlerModal v-if="needsBowler" :bowling-players="bowlingPlayers" @confirm="submitBowler" />
-    <WicketModal
-      v-if="showWicket && inns?.striker && inns?.non_striker"
-      :striker="inns.striker"
-      :non-striker="inns.non_striker"
-      :available-batsmen="availableBatsmen"
-      :is-last-wicket="isLastWicket"
-      @confirm="onWicket"
-      @cancel="showWicket = false"
-    />
+    <Transition name="modal">
+      <OpenersModal
+        v-if="needsTransition"
+        title="Innings Break — Set Openers for 2nd Innings"
+        :batting-players="bowlingPlayers"
+        :bowling-players="battingPlayers"
+        @confirm="submitTransition"
+      />
+    </Transition>
 
-    <ExtrasModal
-      v-if="extrasKind"
-      :kind="extrasKind"
-      @confirm="onExtras"
-      @cancel="extrasKind = null"
-    />
+    <Transition name="modal">
+      <BowlerModal v-if="needsBowler" :bowling-players="bowlingPlayers" @confirm="submitBowler" />
+    </Transition>
+
+    <Transition name="modal">
+      <WicketModal
+        v-if="showWicket && inns?.striker && inns?.non_striker"
+        :striker="inns.striker"
+        :non-striker="inns.non_striker"
+        :available-batsmen="availableBatsmen"
+        :is-last-wicket="isLastWicket"
+        @confirm="onWicket"
+        @cancel="showWicket = false"
+      />
+    </Transition>
+
+    <Transition name="modal">
+      <ExtrasModal
+        v-if="extrasKind"
+        :kind="extrasKind"
+        @confirm="onExtras"
+        @cancel="extrasKind = null"
+      />
+    </Transition>
 
     <!-- Finish confirmation -->
-    <div
-      v-if="showFinishConfirm"
-      class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-20 p-3"
-    >
-      <div class="bg-card w-full max-w-md rounded-2xl shadow-lg p-5 space-y-4">
-        <h3 class="text-lg font-bold text-wicket">Finish this match?</h3>
-        <p class="text-sm text-slate-500">
-          This ends the match now and <b>locks the score</b>. No more balls can be recorded. This
-          cannot be undone.
-        </p>
-        <div class="flex gap-2">
-          <button
-            class="flex-1 border rounded-xl py-3 font-semibold text-slate-600"
-            @click="showFinishConfirm = false"
-          >
-            Cancel
-          </button>
-          <button
-            class="flex-1 bg-wicket text-white rounded-xl py-3 font-bold active:scale-95"
-            @click="finishMatch"
-          >
-            Finish &amp; Lock
-          </button>
+    <Transition name="modal">
+      <div
+        v-if="showFinishConfirm"
+        class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-20 p-3"
+      >
+        <div class="modal-card bg-card w-full max-w-md rounded-2xl shadow-lg p-5 space-y-4">
+          <h3 class="text-lg font-bold text-wicket">Finish this match?</h3>
+          <p class="text-sm text-slate-500">
+            This ends the match now and <b>locks the score</b>. No more balls can be recorded. This
+            cannot be undone.
+          </p>
+          <div class="flex gap-2">
+            <button
+              class="flex-1 border rounded-xl py-3 font-semibold text-slate-600"
+              @click="showFinishConfirm = false"
+            >
+              Cancel
+            </button>
+            <button
+              class="flex-1 bg-wicket text-white rounded-xl py-3 font-bold active:scale-95"
+              @click="finishMatch"
+            >
+              Finish &amp; Lock
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
+
+    <!-- Settings -->
+    <Transition name="modal">
+      <SettingsModal
+        v-if="showSettings"
+        :current="prefs.theme"
+        @select="prefs.setTheme($event)"
+        @close="showSettings = false"
+      />
+    </Transition>
+
+    <!-- Action errors float above every modal -->
+    <Toast :message="actionError" @close="actionError = null" />
   </div>
 
   <p v-else class="text-slate-400 pt-10 text-center">Loading match…</p>

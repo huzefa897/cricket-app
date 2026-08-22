@@ -25,10 +25,12 @@
 - **Ad-Hoc Teams (Option A):** No permanent team directories required. When creating a match, the user simply inputs Team Name 1, Team Name 2, and adds player rosters on the fly.
 - **Match Configuration:** Total overs configuration, toss winner, and toss decision (Bat/Bowl).
 
-### Roles & Access Control
+### Roles & Access Boundary
 
-- **Admin / Scorer:** Has write access via a touch-friendly mobile interface to log deliveries.
-- **Viewer:** Read-only access for teammates and spectators to watch live updates in real-time.
+- **Scorer Surface:** A touch-friendly interface can create matches and log deliveries.
+- **Viewer Surface:** A read-only route lets teammates and spectators follow live updates.
+- **Phase 1 Boundary:** These are workflow roles, not enforced identities. Phase 1 has no
+  accounts or scorer passcode, so write routes are not yet access-controlled.
 
 ### Scoring Engine & Core Rules
 
@@ -48,7 +50,33 @@
 ### Match Completion & History
 
 - **Innings Transitions:** Auto-calculates the target (1st innings score + 1), swaps batting and bowling teams, and prompts for new opening batsmen/bowlers.
-- **Post-Match & Local History:** Saves completed matches to local SQLite storage to review past game scorecards and stats.
+- **Post-Match & Local History:** Saves completed matches to local SQLite storage,
+  locks further scoring, and exposes them through the History/read-only routes.
+  Expanded summaries and full scorecard tables remain deferred UI work.
+
+### Delivered Phase 1.1 UI Scope Additions
+
+The following presentation work was delivered after the original MVP. It expands
+the frontend experience but does not add new scoring rules or authentication:
+
+- **Theme framework:** Frosted and Classic Light app skins with interchangeable
+  scorer dashboard components and a shared component contract.
+- **Persisted preference:** The selected theme is saved locally on the device.
+- **Home live list:** The Home screen polls for active matches and exposes a
+  direct route back to scoring.
+- **Shared status language:** A consistent live badge, completed/upcoming badges,
+  and clearer utility list cards across Home and History.
+- **Utility control system:** Shared primary/secondary buttons, selected toggles,
+  chips, validation hints, and disabled states for Setup and other utility views.
+- **Feedback and motion:** Route/modal/list transitions, reduced-motion support,
+  and reusable toast notifications for scoring errors.
+
+This work is intentionally recorded as scope expansion rather than retroactively
+treated as part of the original Phase 1 estimate.
+
+Phase 1.1 is closed at this boundary. Additional themes or decorative variants
+are not implicit acceptance criteria; further UI work must either address a
+field-tested usability problem or be assigned explicitly to a later phase.
 
 ---
 
@@ -76,7 +104,8 @@
 
 - **Phase 2: Polish & Field Testing**
     - Robust "Undo last ball" and error correction features.
-    - High-contrast UI mode for bright outdoor sunlight.
+    - Dedicated high-contrast sunlight mode. Classic Light is available now but
+      has not replaced field testing or a purpose-built sunlight mode.
     - Export scorecards as images for WhatsApp groups.
 - **Phase 3: Cloud Migration & Global Viewing**
     - Migrate SQLite to PostgreSQL.

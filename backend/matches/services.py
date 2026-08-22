@@ -142,6 +142,10 @@ def change_bowler(innings: Innings, *, bowler_id: int) -> Innings:
         raise ValidationError("Please select a different bowler")
     if innings.is_completed:
         raise ValidationError("Cannot record a change of bowler on innings complated")
+    # No consecutive overs: whoever bowled the last delivery can't bowl the next.
+    last_ball = innings.balls.last()
+    if last_ball and bowler_id == last_ball.bowler_id:
+        raise ValidationError("The last bowler and next bowler can't be the same.")
     innings.current_bowler = bowler
     innings.save(update_fields=["current_bowler"])
     return innings
@@ -254,6 +258,11 @@ def record_ball(
     if over_complete and not is_wicket:
         _swap_strike(innings)
 
+    # 3b) End of over: clear the bowler so the scorer must pick who bowls next.
+    #     Drives the "select bowler" prompt (undo restores this from pre_state).
+    if over_complete:
+        innings.current_bowler = None
+
     # 4) Innings / match completion
     _check_innings_completion(innings)
 
@@ -264,8 +273,10 @@ def record_ball(
 def _validate_ball(innings: Innings, extra_type: str, runs_scored_bat: int) -> None:
     if innings.is_completed:
         raise ValidationError("Cannot record a ball on a completed innings.")
-    if innings.current_striker_id is None or innings.current_bowler_id is None:
+    if innings.current_striker_id is None:
         raise ValidationError("Set the openers (striker, non-striker, bowler) first.")
+    if innings.current_bowler_id is None:
+        raise ValidationError("Select the bowler for this over first.")
     if extra_type in (ExtraType.WIDE, ExtraType.BYE, ExtraType.LEG_BYE) and runs_scored_bat:
         raise ValidationError("runs_scored_bat must be 0 for wides, byes, and leg-byes.")
 

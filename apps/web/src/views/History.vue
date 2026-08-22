@@ -2,7 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/client'
-import type { MatchListItem, MatchStatus } from '../types'
+import LiveBadge from '../components/LiveBadge.vue'
+import type { MatchListItem } from '../types'
 
 const router = useRouter()
 const matches = ref<MatchListItem[]>([])
@@ -13,10 +14,10 @@ onMounted(async () => {
   loading.value = false
 })
 
-const STATUS_STYLE: Record<MatchStatus, string> = {
-  LIVE: 'bg-boundary text-white',
-  COMPLETED: 'bg-system text-white',
-  UPCOMING: 'bg-slate-200 text-slate-600',
+// Non-live statuses use calm neutral pills; LIVE uses the shared LiveBadge.
+const STATUS_STYLE: Record<'COMPLETED' | 'UPCOMING', string> = {
+  COMPLETED: 'badge-done',
+  UPCOMING: 'badge-upcoming',
 }
 
 function open(m: MatchListItem) {
@@ -35,21 +36,18 @@ function open(m: MatchListItem) {
       No matches yet. Start one from “New Match”.
     </p>
 
-    <button
-      v-for="m in matches"
-      :key="m.id"
-      class="w-full text-left bg-card rounded-xl shadow-sm p-4 active:scale-[0.99] transition-transform"
-      @click="open(m)"
-    >
-      <div class="flex items-center justify-between">
-        <span class="font-semibold text-slate-700">{{ m.team_one }} vs {{ m.team_two }}</span>
-        <span class="text-xs font-bold px-2 py-1 rounded-full" :class="STATUS_STYLE[m.status]">
-          {{ m.status }}
-        </span>
+    <button v-for="m in matches" :key="m.id" class="list-card" @click="open(m)">
+      <div class="min-w-0 flex-1 text-left">
+        <span class="font-semibold text-slate-700 truncate block"
+          >{{ m.team_one }} vs {{ m.team_two }}</span
+        >
+        <p class="text-sm text-slate-400 mt-1">
+          {{ m.total_overs }} overs · {{ new Date(m.created_at).toLocaleString() }}
+        </p>
       </div>
-      <p class="text-sm text-slate-400 mt-1">
-        {{ m.total_overs }} overs · {{ new Date(m.created_at).toLocaleString() }}
-      </p>
+      <LiveBadge v-if="m.status === 'LIVE'" class="shrink-0" />
+      <span v-else class="shrink-0" :class="STATUS_STYLE[m.status]">{{ m.status }}</span>
+      <span class="chev">›</span>
     </button>
   </div>
 </template>

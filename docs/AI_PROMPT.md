@@ -259,8 +259,8 @@ To keep development clean, maintainable, and aligned with YAGNI and SOLID princi
 > 
 - [**REPO.md**](REPO.md) — Repository structure, `asdf` tool versions (`.tool-versions`), `Nx` monorepo configuration, `pnpm` workspaces, and native execution commands (`pnpm nx run api:serve`, `pnpm nx run web:serve`).
 - [**SCHEMA.md**](SCHEMA.md) — Complete database schema (`Team`, `Player`, `Match`, `Innings`, `BallEvent`), relational constraints, and core Django model specifications.
-- [**UI_PLAN.md**](UI_PLAN.md) — Screen-by-screen UX workflows (`/setup`, `/match/{id}/score`, `/match/{id}/live`, `/history`) and the 5-step Wicket Wizard modal flow.
-- [**PALETTE.md**](PALETTE.md) — The mandatory functional color-coding system (Off-white canvas, white cards, slate runs, purple boundaries, ochre wides, teal no-balls, rust wickets, and sage system actions).
+- [**UI_PLAN.md**](UI_PLAN.md) — Current screen behavior, shipped design-system additions, deferred UI scope, and the 5-step Wicket Wizard flow.
+- [**PALETTE.md**](PALETTE.md) — Theme architecture, Frosted and Classic design direction, functional color roles, shared controls, and motion rules.
 - [**SCOPE.md**](SCOPE.md) — Engineering principles (SOLID, YAGNI), architectural guardrails, and Phase 1 MVP boundaries.
 - [**PHASES.md**](PHASES.md) — Detailed milestone breakdown, implementation tracking, and phased roadmap toward full MVP delivery.
 
@@ -287,7 +287,7 @@ You can run both frontend and backend services directly from the project root wi
 ## 4. Code Quality & Standards
 
 - **Python Backend:** Managed via Pipenv. Linting and auto-formatting handled by **Ruff** (configured via `pyproject.toml` and `.pre-commit-config.yaml` with auto-fix enabled).
-- **Vue 3 Frontend:** Built using Composition API (`<script setup>`) and follows the strict canonical component styling and functional color tokens defined in `PALETTE.md`.
+- **Vue 3 Frontend:** Built using Composition API (`<script setup>`) and follows the theme contract, shared utility controls, and functional color roles defined in `PALETTE.md`.
 
 ## 2. Repo Structure & Tech Stack
 

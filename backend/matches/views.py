@@ -1,13 +1,14 @@
 """API views — thin controllers that validate input and delegate to services."""
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import services
-from .models import Match
+from .models import Innings, Match
 from .serializers import (
     BallInputSerializer,
     BowlerChangeSerializer,
@@ -27,7 +28,10 @@ class MatchesView(APIView):
     """GET: history list. POST: create a match + open Innings 1."""
 
     def get(self, request):
-        qs = Match.objects.all()
+        # Prefetch innings (+ batting team) so live_summary adds no per-row queries.
+        qs = Match.objects.select_related("team_one", "team_two").prefetch_related(
+            Prefetch("innings", queryset=Innings.objects.select_related("batting_team"))
+        )
         return Response(MatchListSerializer(qs, many=True).data)
 
     def post(self, request):

@@ -83,6 +83,15 @@ Migrations run automatically on startup. Config is via env (see `docker-compose.
   live players, over ticker, 5-step Wicket Wizard, innings transition), Viewer live
   (read-only, polling), and History. Live updates via polling (no WebSockets in Phase 1).
 
+✅ **Phase 1.1 UI expansion complete** — delivered beyond the original MVP estimate:
+- Frosted and Classic Light themes with persisted device preference and swappable
+  scorer dashboard components.
+- Home live-match polling, shared live/completed/upcoming status treatments, and
+  reusable utility controls across Home, Setup, and History.
+- Settings, toast feedback, route/modal/list motion, and reduced-motion handling.
+- This expansion does **not** include auth, undo/edit, smart roster autocomplete,
+  full scorecard tables, or a field-tested sunlight mode; those remain deferred.
+
 ⏭️ **Next: Phase 2** — Undo/edit last ball, high-contrast sunlight mode, image/PDF
 scorecard export. See [PHASES.md](docs/PHASES.md).
 
