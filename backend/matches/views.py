@@ -107,6 +107,24 @@ class RecordBallView(APIView):
         return Response(services.build_live_state(match))
 
 
+class UndoBallEventView(APIView):
+    """Undo feature which helps reversing a ball event"""
+
+    def post(self, request, match_id):
+        match = get_object_or_404(Match, pk=match_id)
+        innings = _active_innings(match)
+        if innings is None:
+            return Response(
+                {"detail": "No active innings to score."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            services.undo_last_ball(innings)
+        except DjangoValidationError as exc:
+            return Response({"detail": exc.messages}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(services.build_live_state(match))
+
+
 class TransitionInningsView(APIView):
     """End Innings 1 and open Innings 2 (swap sides, set new openers)."""
 

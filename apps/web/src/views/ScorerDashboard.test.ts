@@ -18,6 +18,7 @@ vi.mock('../api/client', () => ({
     recordBall: vi.fn(),
     transitionInnings: vi.fn(),
     finishMatch: vi.fn(),
+    undoLastBall: vi.fn(),
   },
 }))
 
@@ -169,6 +170,25 @@ describe('ScorerDashboard integration', () => {
     await flushPromises()
 
     expect(mockedApi.changeBowler).toHaveBeenCalledWith(1, 6)
+  })
+
+  it('disables Undo when no ball has been bowled yet', async () => {
+    // Default fixture: legal_balls_bowled = 0 => nothing to undo.
+    const wrapper = await mountDashboard()
+    expect(findBtn(wrapper, 'Undo Ball').attributes('disabled')).toBeDefined()
+  })
+
+  it('undoes the last ball once one has been bowled', async () => {
+    mockedApi.getLive.mockResolvedValue(liveFixture({ total_runs: 4, legal_balls_bowled: 1 }))
+    mockedApi.undoLastBall.mockResolvedValue(liveFixture({ total_runs: 0, legal_balls_bowled: 0 }))
+    const wrapper = await mountDashboard()
+
+    const undo = findBtn(wrapper, 'Undo Ball')
+    expect(undo.attributes('disabled')).toBeUndefined() // enabled now
+    await undo.trigger('click')
+    await flushPromises()
+
+    expect(mockedApi.undoLastBall).toHaveBeenCalledWith(1)
   })
 
   it('finishing the match calls the finish endpoint and locks scoring', async () => {

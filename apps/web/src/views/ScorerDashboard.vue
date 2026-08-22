@@ -47,6 +47,7 @@ const matchCompleted = computed(() => live.value?.status === 'COMPLETED')
 const needsTransition = computed(
   () => !!inns.value?.is_completed && inns.value.innings_number === 1 && !matchCompleted.value,
 )
+const noUndo = computed(() => (inns.value?.legal_balls_bowled ?? 0) === 0)
 
 // --- Actions ---
 async function run<T>(fn: () => Promise<T>) {
@@ -85,6 +86,9 @@ function submitTransition(payload: OpenersPayload) {
 function finishMatch() {
   showFinishConfirm.value = false
   run(() => store.finish())
+}
+function undoLastBall() {
+  run(() => store.undoLastBall())
 }
 </script>
 
@@ -187,6 +191,14 @@ function finishMatch() {
           Bye / LB
         </button>
       </div>
+      <button
+        class="w-full bg-undo text-slate-900 text-xl font-bold rounded-xl py-6 active:scale-95 disabled:opacity-40"
+        @click="undoLastBall()"
+        :disabled="noUndo || busy"
+      >
+        Undo Ball
+      </button>
+
       <button
         class="w-full bg-wicket text-white text-xl font-bold rounded-xl py-6 active:scale-95"
         @click="showWicket = true"

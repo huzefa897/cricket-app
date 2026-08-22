@@ -13,6 +13,7 @@ vi.mock('../api/client', () => ({
     recordBall: vi.fn(),
     transitionInnings: vi.fn(),
     finishMatch: vi.fn(),
+    undoLastBall: vi.fn(),
   },
 }))
 
@@ -126,6 +127,20 @@ describe('match store', () => {
     await store.changeBowler(9)
     expect(mockedApi.changeBowler).toHaveBeenCalledWith(1, 9)
     expect(store.innings?.bowler?.id).toBe(9)
+  })
+
+  it('undoLastBall calls the client and updates live state', async () => {
+    mockedApi.getMatch.mockResolvedValue(detailFixture)
+    // Start from a state with a ball on the board...
+    mockedApi.getLive.mockResolvedValue(liveFixture({ total_runs: 4, legal_balls_bowled: 1 }))
+    // ...and have undo return the rewound state.
+    mockedApi.undoLastBall.mockResolvedValue(liveFixture({ total_runs: 0, legal_balls_bowled: 0 }))
+    const store = useMatchStore()
+    await store.open(1, { poll: false })
+    await store.undoLastBall()
+    expect(mockedApi.undoLastBall).toHaveBeenCalledWith(1)
+    expect(store.innings?.total_runs).toBe(0)
+    expect(store.innings?.legal_balls_bowled).toBe(0)
   })
 
   it('finish() marks the match completed', async () => {

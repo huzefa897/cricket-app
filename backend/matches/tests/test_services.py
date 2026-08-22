@@ -442,6 +442,24 @@ class TestUndoLastBall:
         with pytest.raises(ValidationError):
             services.undo_last_ball(inns)
 
+    def test_raises_on_ball_without_snapshot(self, opened_match):
+        # Balls logged before the pre_state feature carry an empty snapshot
+        # (the field default). Undo must degrade to a clean ValidationError,
+        # not a raw KeyError. See regression: KeyError 'total_runs'.
+        match, _ = opened_match
+        inns = active_innings(match)
+        services.record_ball(inns, runs_scored_bat=1)
+        legacy = inns.balls.order_by("id").last()
+        legacy.pre_state = {}
+        legacy.save(update_fields=["pre_state"])
+
+        with pytest.raises(ValidationError):
+            services.undo_last_ball(inns)
+        # The ball is left intact — nothing was half-undone.
+        inns.refresh_from_db()
+        assert inns.balls.count() == 1
+        assert inns.total_runs == 1
+
 
 # --------------------------------------------------------------------------- #
 # Live state derivations

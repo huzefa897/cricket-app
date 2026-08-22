@@ -79,6 +79,11 @@ export const useMatchStore = defineStore('match', () => {
     live.value = await api.changeBowler(currentId, bowlerId)
   }
 
+  async function undoLastBall() {
+    if (currentId == null) return
+    live.value = await api.undoLastBall(currentId)
+  }
+
   async function recordBall(payload: BallPayload) {
     if (currentId == null) return
     live.value = await api.recordBall(currentId, payload)
@@ -112,11 +117,12 @@ export const useMatchStore = defineStore('match', () => {
     bowlingPlayers,
     availableBatsmen,
     isLastWicket,
+    changeBowler,
+    undoLastBall,
     refresh,
     stopPolling,
     open,
     setOpeners,
-    changeBowler,
     recordBall,
     transition,
     finish,

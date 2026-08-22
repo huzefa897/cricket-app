@@ -19,4 +19,5 @@ urlpatterns = [
         name="match-transition",
     ),
     path("matches/<int:match_id>/finish/", views.FinishMatchView.as_view(), name="match-finish"),
+    path("matches/<int:match_id>/undo/", views.UndoBallEventView.as_view(), name="match-undo"),
 ]

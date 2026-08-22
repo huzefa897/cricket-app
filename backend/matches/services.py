@@ -158,6 +158,8 @@ def undo_last_ball(innings: Innings) -> Innings:
         raise ValidationError("No ball to undo.")
 
     prev = last.pre_state
+    if not prev:
+        raise ValidationError("This ball predates undo support and can't be reversed.")
     innings.total_runs = prev["total_runs"]
     innings.total_wickets = prev["total_wickets"]
     innings.legal_balls_bowled = prev["legal_balls_bowled"]

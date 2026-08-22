@@ -47,4 +47,6 @@ export const api = {
     request<LiveState>(`/matches/${id}/innings/transition/`, { method: 'POST', body: payload }),
   finishMatch: (id: number | string) =>
     request<LiveState>(`/matches/${id}/finish/`, { method: 'POST' }),
+  undoLastBall: (id: number | string) =>
+    request<LiveState>(`/matches/${id}/undo/`, { method: 'POST' }),
 }
